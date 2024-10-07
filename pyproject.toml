@@ -1,0 +1,15 @@
+[project]
+name = "streamlit_gui"
+version = "0.1"
+description = "Default template for PDM package"
+authors = [
+    {name = "Talia-James", email = "dr.talia.james@gmail.com"},
+]
+dependencies = []
+requires-python = ">=3.8"
+readme = "README.md"
+license = {text = "None"}
+
+
+[tool.pdm]
+distribution = false

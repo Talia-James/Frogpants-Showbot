@@ -1,3 +1,4 @@
 'streamid', (0, 26)
 'livechatid', (512, 90)
 'old_streamid', (1024, 19)
+'process', (1536, 4)

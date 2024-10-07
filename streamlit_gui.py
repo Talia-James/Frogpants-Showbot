@@ -1,6 +1,13 @@
 import streamlit as st
 from funcs import *
-import shelve
+import shelve,subprocess
+# import streamlit_process_manager as spm
+from threading import Thread
+from streamlit.runtime.scriptrunner import add_script_run_ctx
+from test import farts
+import time
+from streamlit_YT_showbot import bot
+
 
 st.set_page_config(
     page_title="Temporary Frogpants Showbot GUI",
@@ -25,7 +32,7 @@ def main():
     with st.expander(label='Auto-detect tool'):
         st.subheader('Find streamid via channel')
         st.write("You can use my auto-detect tool to find it via your channel name instead (youtube.com/[CHANNEL_ID], defaults to yours which is @ScottJohnson). This is even easier, but it can take a few seconds longer and uses more resources. This will overwrite your previous streamid value.")
-        channel = st.text_input(label='Stream ID',value='@ScottJohnson')
+        channel = st.text_input(label='Stream ID',value='@ScottJohnson',key='chan_input')
         if st.button(label='Auto-detect'):
             streamid = find_stream_id(channel)
             if streamid:
@@ -62,9 +69,6 @@ def main():
     if livechatid:
             if 'livechatid' not in st.session_state:
                 st.session_state['livechatid'] = livechatid
-                if st.button(label='Save livechatid'):
-                    with shelve.open('params') as f:
-                        f['livechatid'] = livechatid
     if st.button('Find chat ID'):
         livechatid = find_chat_id(streamid)
         if livechatid is not None:
@@ -73,26 +77,48 @@ def main():
             st.session_state['livechatid'] = livechatid
             with shelve.open('params') as f:
                 f['livechatid'] = livechatid
-        else:
-            st.write(f'No stream detected at https://www.youtube.com/watch?v={streamid}')
-    st.title('Send custom message')
-    if 'livechatid' not in st.session_state:
-        message = st.text_input(label='Message text')
-        if st.button(label='Send a message outside the bot loop.'):
-            credentials = build_credentials(client_secrets_file,scopes)
-            youtube = build_yt_obj(googleapiclient.discovery,credentials,api_service_name, api_version)
-            request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
-            "type": "textMessageEvent",
-            "textMessageDetails": {
-                "messageText": message}}})
-            response = request.execute()
-            st.write(response)
-
-
-
-
+    else:
+        st.write(f'No stream detected at https://www.youtube.com/watch?v={streamid} (or the script was interacted with and re-ran without setting this value)')
+    livechatid = st.text_input(label='Manual livechatid entry',value=livechatid)
+    if st.button(label='Save livechatid'):
+        with shelve.open('params') as f:
+            f['livechatid'] = livechatid
+    st.title('Spin up the bot')
+    if st.button('Launch bot.'):
+        bot()
+        # with shelve.open('params') as f:
+        #     process = f['process']
+        # if process == None:
+        #     command = ['python','test.py']
+        #     # output_file = "program_output.txt"
+        #     # process = spm.run(command,output_file=output_file)
+        #     process = Thread(target=farts,daemon=False)
+        #     add_script_run_ctx(process)
+        #     process.start()
+        # try:
+        #     for line in process.stdout:
+        #         st.text(line)
+        #         print(line)
+        # except UnboundLocalError:
+        #     st.write('Not bot output detected.')
+    with st.expander(label='Experimental custom message sending'):
+        st.title('Send custom message')
+        st.write("While the function works fine, it's still a little experimental with how the process plays with this GUI interface package I'm using. If you send a message, the script re-runs top-down which may kill the bot background process--I'm still testing this out.")
+        if 'livechatid' in st.session_state:
+            message = st.text_input(label='Message text')
+            if st.button(label='Send a message outside the bot loop.'):
+                credentials = build_credentials(client_secrets_file,scopes)
+                youtube = build_yt_obj(credentials,api_service_name, api_version,module=googleapiclient.discovery)
+                request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
+                "type": "textMessageEvent",
+                "textMessageDetails": {
+                    "messageText": message}}})
+                response = request.execute()
+                try:
+                    sent_message = response['snippet']['displayMessage']
+                    st.write(f'Your message: {sent_message} was successfully sent!')
+                except KeyError:
+                    st.write(f'Something went wrong, and it looks like {message} did not send correctly.')
 
 if __name__ == '__main__':
     main()
-        
-    

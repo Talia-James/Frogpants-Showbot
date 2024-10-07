@@ -164,7 +164,7 @@ def find_chat_id(livestreamid,api_service_name=api_service_name,api_version=api_
         return livechatid
     except IndexError:
         print(response)
-    
+
 
 #Once find_chat_id() locates a LiveChatId string, that value is then used to poll the API again for all the chat messages with the supplied id.
 #The response is a standard API JSON object that is parsed with other functions.
@@ -253,3 +253,5 @@ async def send_async_chat_message(livechatid,author,api_service_name=api_service
 project_id = 'frogpants-showbot'
 project_number = '347817049340'
 resource_name = f'projects/{project_number}/locations/global/services/compute.googleapis.com/quotaInfos/CPUS-per-project-region'
+
+{"kind":"youtube#liveChatMessage","etag":"1SdK_SzdEEITypPR6RA4qPxQEoU","id":"LCC.EhwKGkNQZXoyS0szOVlnREZTWFFsQWtkVWlNZndR","snippet":{"type":"textMessageEvent","liveChatId":"Cg0KC0lxOGxIbk5XZ1JBKicKGFVDMGFzUF9TNUZkTzlxTlNTaVhZcXVsdxILSXE4bEhuTldnUkE","authorChannelId":"UCe0NvetAARl8QugJHg2tnYA","publishedAt":"2024-10-04T19:12:38.450629+00:00","hasDisplayContent":True,"displayMessage":"Oh myyy...","textMessageDetails":{"messageText":"Oh myyy..."}}}
