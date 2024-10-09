@@ -205,6 +205,9 @@ def randomize_confirmation(author):
         confirmation_message = confirmation_message.upper() #You know why
     elif author=='Coverville':
         confirmation_message = confirmation_message + ' (you coward)'
+    elif author=='StephanieinahpetS':
+        confirmation_message = confirmation_message[::-1]
+    confirmation_message = confirmation_message.replace(author,f'@{author}')
     return confirmation_message
 
 #Use a livechatid string with a supplied author string to send a confirmation message that the title has been submitted.
