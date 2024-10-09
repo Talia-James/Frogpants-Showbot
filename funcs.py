@@ -224,16 +224,18 @@ def send_chat_message(livechatid,author,api_service_name=api_service_name,api_ve
     print('Submission attempted.')
     return response
 
-async def send_async_chat_message(livechatid,author,api_service_name=api_service_name,api_version=api_version,client_secrets_file=client_secrets_file,credentials=None,scopes=scopes,module = googleapiclient.discovery):
-    credentials = build_credentials(client_secrets_file,scopes)
-    youtube = build_yt_obj(module,credentials,api_service_name, api_version)
-    confirmation_message = randomize_confirmation(author)
-    request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
-            "type": "textMessageEvent",
-            "textMessageDetails": {
-                "messageText": confirmation_message}}})
-    response = request.execute()
-    return response
+
+#I was briefly testing asynchronous error handling to try and resubmit a 403 denied error, but I seem to have solved the issue. Keeping in case.
+# async def send_async_chat_message(livechatid,author,api_service_name=api_service_name,api_version=api_version,client_secrets_file=client_secrets_file,credentials=None,scopes=scopes,module = googleapiclient.discovery):
+#     credentials = build_credentials(client_secrets_file,scopes)
+#     youtube = build_yt_obj(module,credentials,api_service_name, api_version)
+#     confirmation_message = randomize_confirmation(author)
+#     request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
+#             "type": "textMessageEvent",
+#             "textMessageDetails": {
+#                 "messageText": confirmation_message}}})
+#     response = request.execute()
+#     return response
 
 #TODO: The credentials variable could possibly be saved and passed within the script and might not need to be rebuilt each time.
 #In general the OAuth2 flow could likely be streamlined a little bit.
@@ -250,11 +252,3 @@ async def send_async_chat_message(livechatid,author,api_service_name=api_service
 #             print(f'{author}: {message}')
 #             author,message = html_ify(author),html_ify(message)
 #             print(f'http://www.showbot.tv/s/add.php?title=$({message})&user={author}&channel=Frogpants&key={token}')
-
-
-#TODO Use this info to query either the Google Cloud API or Service Control API to get Quota useage and automate into dashboard
-project_id = 'frogpants-showbot'
-project_number = '347817049340'
-resource_name = f'projects/{project_number}/locations/global/services/compute.googleapis.com/quotaInfos/CPUS-per-project-region'
-
-{"kind":"youtube#liveChatMessage","etag":"1SdK_SzdEEITypPR6RA4qPxQEoU","id":"LCC.EhwKGkNQZXoyS0szOVlnREZTWFFsQWtkVWlNZndR","snippet":{"type":"textMessageEvent","liveChatId":"Cg0KC0lxOGxIbk5XZ1JBKicKGFVDMGFzUF9TNUZkTzlxTlNTaVhZcXVsdxILSXE4bEhuTldnUkE","authorChannelId":"UCe0NvetAARl8QugJHg2tnYA","publishedAt":"2024-10-04T19:12:38.450629+00:00","hasDisplayContent":True,"displayMessage":"Oh myyy...","textMessageDetails":{"messageText":"Oh myyy..."}}}

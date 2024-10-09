@@ -1,3 +1,5 @@
+#Adapted version of showbot_YT.py that works with the streamlit package.
+
 #Current YouTube Data API request quota: 10,000 units per day.
 #List functions, used to get channel/chat information and ids and also used to poll chat messages, normally cost 1 unit
 #The insert function, used to send the confirmation messages, normally uses an estimated 50 units per sent message.
@@ -44,7 +46,11 @@ def bot():
                 "textMessageDetails": {
                 "messageText": "Bot up. Let's roll buttholes!"}}})
         #TODO capture and parse the response code in case the request is denied.
-        response = request.execute()
+        try: 
+            response = request.execute()
+        except HttpError:
+            print('HTTP Error')
+            st.write('There was an HTTP error when trying to launch the bot. Please try again or contact Talia.')
         print('Init')
         while True:
             authors,titles = title_search(read_chat(livechatid)) #Poll API for all chat messages, regardless of they've been polled already or not. title_search() already filters for '!s' chat trigger and cleans as needed
@@ -60,24 +66,15 @@ def bot():
                     try:
                         requests.get(submission_link)
                     except TimeoutError:
-                        print('Timeout error')
+                        print('Timeout error when submitting title to Showbot (i.e. not YouTube)')
                     #At this point the title has been submitted. This is one complete function and API call. Confirmation via the .insert() method to send a message is a separate 
                     #function incurring higher quota useage.
                     try:
                         response = send_chat_message(livechatid,author) #The API response in JSON format. Not technically needed but saved in case.
-                        # delay = response['pollingIntervalMillis ']
+                        # delay = response['pollingIntervalMillis '] I may try to add this at a later date in order to streamline the polling process.
                         print(f'Title successfully submitted and confirmed: {author}.') #Generic success message only for the console for debugging and monitoring purposes.
                     except googleapiclient.errors.HttpError: #For some reason the script can get a 403 response code error when attempting to submit a confirmation response. This block keeps the script from halting if that occurs.
-                        print(f'HTTP Error: [{author}: {title}] failed to submit.')
-                        #This is an experimental approach to handling the 403 error by attempting to resubmit the response asynchronously.
-                        #The 403 errors seemed to have stopped since making the pseudo-service account, so this may be removed in the future.
-                        # print(f'HTTP Error: [{author}: {title}] failed to submit. Trying again in 3 seconds.') 
-                        # asyncio.sleep(3)
-                        # try:
-                        #     response = asyncio.send_async_chat_message(livechatid,author)
-                        # except googleapiclient.errors.HttpError:
-                        #     print(f'Submission of [{author}: {title}] failed.')
-                        # print(traceback.format_exc())           
+                        print(f'HTTP Error: [{author}: {title}] failed to submit.')      
             time.sleep(5) #Interval at which the API is polled for all chat messages. Can be adjusted to lower costs but increase delay or vice versa.
     except googleapiclient.errors.HttpError:
         print('No live chat detected, likely because the chat has ended.')

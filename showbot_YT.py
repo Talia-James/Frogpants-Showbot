@@ -1,3 +1,4 @@
+#Standalone script that runs indepently of the streamlit controller interface
 #Current YouTube Data API request quota: 10,000 units per day.
 #List functions, used to get channel/chat information and ids and also used to poll chat messages, normally cost 1 unit
 #The insert function, used to send the confirmation messages, normally uses an estimated 50 units per sent message.

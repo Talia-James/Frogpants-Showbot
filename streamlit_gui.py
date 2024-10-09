@@ -1,11 +1,7 @@
+#Controller GUI for the showbot_YT function. !!!! Be aware that the functionality is the same, but streamlit needs to be adapted so this script is tied to streamlit_YT_showbot.py instead !!!!
 import streamlit as st
 from funcs import *
-import shelve,subprocess
-# import streamlit_process_manager as spm
-from threading import Thread
-from streamlit.runtime.scriptrunner import add_script_run_ctx
-from test import farts
-import time
+import shelve
 from streamlit_YT_showbot import bot
 
 
