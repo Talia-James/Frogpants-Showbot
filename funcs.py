@@ -199,7 +199,7 @@ randomized_messages = [
     ]
 
 #Function randomizes the inputted author variable into a confirmation message that is not repeated too often
-def randomize_confirmation(author):
+def randomize_confirmation(author,disc_format=False):
     confirmation_message = choice(randomized_messages).replace('AUTHOR_VAR',author)
     if author=='Clare Gak': 
         confirmation_message = confirmation_message.upper() #You know why
@@ -207,7 +207,10 @@ def randomize_confirmation(author):
         confirmation_message = confirmation_message + ' (you coward)'
     elif author=='StephanieinahpetS':
         confirmation_message = confirmation_message[::-1]
-    confirmation_message = confirmation_message.replace(author,f'@{author}')
+    if disc_format:
+        confirmation_message = confirmation_message.replace(author,f'{author}')
+    else:
+        confirmation_message = confirmation_message.replace(author,f'@{author}')
     return confirmation_message
 
 #Use a livechatid string with a supplied author string to send a confirmation message that the title has been submitted.
