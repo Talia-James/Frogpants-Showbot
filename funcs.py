@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from google.auth.transport.requests import Request
+from google.auth.exceptions import RefreshError
 import google_auth_oauthlib.flow
 from google.oauth2.credentials import Credentials
 import googleapiclient.discovery
@@ -100,23 +101,32 @@ def build_credentials(client_secrets_file,scopes,testing=True):
     if testing:
         if os.path.exists("../token.json"): #Token stored in parent directory for security reasons
             credentials = Credentials.from_authorized_user_file("../token.json", scopes)
-            # print('Experimental Token Used.')
+            print('Credentials found.')
     else:
         if os.path.exists("../working_submit_token_Talia_do_not_delete.json"): #Token stored in parent directory for security reasons
             credentials = Credentials.from_authorized_user_file("../working_submit_token_Talia_do_not_delete.json", scopes)
-            # print('Original Token Used.')
+            print('Older token used.')
     try:
         if not credentials or not credentials.valid:
             if credentials and credentials.expired and credentials.refresh_token:
                 credentials.refresh(Request())
+                print('Credentials refreshed.')
             else:
-                flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(client_secrets_file,scopes)
-                credentials = flow.run_local_server(port=0)
+                credentials = build_flow(client_secrets_file,scopes)
+                print('Credentials rebuilt.')
             with open('../token.json','w') as token:
+                print('New credentials saved via default flow.')
                 token.write(credentials.to_json())
-    except UnboundLocalError:
-        flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(client_secrets_file,scopes)
-        credentials = flow.run_local_server()
+    except (UnboundLocalError,RefreshError):
+        print('Credentials rebuilt via error.')
+        credentials = build_flow(client_secrets_file,scopes,save=True)
+    return credentials
+
+def build_flow(client_secrets_file,scopes,save=False):
+    flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(client_secrets_file,scopes)
+    credentials = flow.run_local_server()
+    if save:
+        print('New credentials saved via function.')
         with open('../token.json','w') as token:
             token.write(credentials.to_json())
     return credentials
