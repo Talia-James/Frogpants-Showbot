@@ -81,7 +81,7 @@ def main():
             f['livechatid'] = livechatid
     st.title('Spin up the bot')
     if st.button('Launch bot.'):
-        bot()
+        bot(livechatid)
         # with shelve.open('params') as f:
         #     process = f['process']
         # if process == None:
