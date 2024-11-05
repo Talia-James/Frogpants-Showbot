@@ -50,7 +50,7 @@ else:
             i = submitted_titles.index(title)
             submitted_titles[i]=submitted_titles[i][:-1]
             times.append(datetime.now())
-    df.author.tolist(),df.title.tolist(),df.source = author_index,submitted_titles,'showbot',times
+    df.author,df.title,df.source = author_index,submitted_titles,'showbot',times
     df.to_csv(f'archive/{df_name}',encoding='utf-8',index=False)
 
 
