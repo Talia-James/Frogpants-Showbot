@@ -97,24 +97,24 @@ def main():
         #         print(line)
         # except UnboundLocalError:
         #     st.write('Not bot output detected.')
-    with st.expander(label='Experimental custom message sending'):
-        st.title('Send custom message')
-        st.write("While the function works fine, it's still a little experimental with how the process plays with this GUI interface package I'm using. If you send a message, the script re-runs top-down which may kill the bot background process--I'm still testing this out.")
-        if 'livechatid' in st.session_state:
-            message = st.text_input(label='Message text')
-            if st.button(label='Send a message outside the bot loop.'):
-                credentials = build_credentials(client_secrets_file,scopes)
-                youtube = build_yt_obj(credentials,api_service_name, api_version,module=googleapiclient.discovery)
-                request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
-                "type": "textMessageEvent",
-                "textMessageDetails": {
-                    "messageText": message}}})
-                response = request.execute()
-                try:
-                    sent_message = response['snippet']['displayMessage']
-                    st.write(f'Your message: {sent_message} was successfully sent!')
-                except KeyError:
-                    st.write(f'Something went wrong, and it looks like {message} did not send correctly.')
+    # with st.expander(label='Experimental custom message sending'):
+    #     st.title('Send custom message')
+    #     st.write("While the function works fine, it's still a little experimental with how the process plays with this GUI interface package I'm using. If you send a message, the script re-runs top-down which may kill the bot background process--I'm still testing this out.")
+    #     if 'livechatid' in st.session_state:
+    #         message = st.text_input(label='Message text')
+    #         if st.button(label='Send a message outside the bot loop.'):
+    #             credentials = build_credentials(client_secrets_file,scopes)
+    #             youtube = build_yt_obj(credentials,api_service_name, api_version,module=googleapiclient.discovery)
+    #             request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
+    #             "type": "textMessageEvent",
+    #             "textMessageDetails": {
+    #                 "messageText": message}}})
+    #             response = request.execute()
+    #             try:
+    #                 sent_message = response['snippet']['displayMessage']
+    #                 st.write(f'Your message: {sent_message} was successfully sent!')
+    #             except KeyError:
+    #                 st.write(f'Something went wrong, and it looks like {message} did not send correctly.')
 
 if __name__ == '__main__':
     main()

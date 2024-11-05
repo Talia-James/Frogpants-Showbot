@@ -1,16 +1,20 @@
-import discord
+import discord,os
 from discord.ext import commands
 from funcs import *
+from random import choice
 
 showbot_channel,token = 'Frogpants','Nhrj6amcz4AqiSP6AVv5YhhQX8OhJ6wO'
+url = f'https://tms.showbot.tv/'
 with open('../frogbot_token.txt') as f:
-    token = f.readlines()[0]
+    disc_token = f.readlines()[0]
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix='!',intents=intents)
 intents.message_content = True
 
 author_index,submitted_titles = build_submission_history(showbot_channel)
+
+bacon_gifs = os.listdir('bacon_gifs')
 
 @bot.event
 async def on_ready():
@@ -26,13 +30,31 @@ async def s(ctx):
     author_html,title_html = html_ify(author),html_ify(title) #Prepare link for submission then submit via Requests module
     submission_link = f'http://www.showbot.tv/s/add.php?title={title_html}&user={author_html}&channel={showbot_channel}&key={token}'
     try:
-        requests.get(submission_link)
+        # print(submission_link)
+        submission = requests.get(submission_link)
+        print(submission)
+        confirmation_message = randomize_confirmation(author,disc_format=True)
+        await ctx.reply(confirmation_message)   
     except TimeoutError:
         print('Timeout error')
-    confirmation_message = randomize_confirmation(author,disc_format=True)
-    await ctx.reply(confirmation_message)
-    
 
-    
+@bot.command(pass_context=True)
+async def guild_info(ctx):
+    guild_id = ctx.message.guild.id
+    channel = ctx.message.channel.id
+    guild = bot.get_guild(guild_id)
+    print(guild_id)
+    print(channel)
+    print(guild.channels)
 
-bot.run(token)
+@bot.command()
+async def showbot(ctx):
+    await ctx.send(f"Don't forget to vote for titles! {url}")
+
+@bot.command()
+async def bacon(ctx):
+    rando_gif = choice(bacon_gifs)
+    gif_fp = os.path.join(os.getcwd(),'bacon_gifs',rando_gif)
+    await ctx.send(file=discord.File(gif_fp))
+
+bot.run(disc_token)
