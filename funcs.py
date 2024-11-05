@@ -6,7 +6,7 @@ from google.auth.exceptions import RefreshError
 import google_auth_oauthlib.flow
 from google.oauth2.credentials import Credentials
 import googleapiclient.discovery
-import os,requests,asyncio
+import os,requests#,asyncio
 from random import choice
 
 #Minimum scopes needed for functions. May even be redundent depending on desired functions
@@ -206,6 +206,7 @@ randomized_messages = [
     f"Did you know your submission is not automatically upvoted? Vote for yourself, {author}, it's totally not masturbation!",
     f'Your submission is never too early for a fish sandwich, {author}.',
     f"Title submitted, {author}. Fert!"
+    f"Great title, {author}, almost like [bzzt] it's your blowers...it's your blowers...it's your blowers...it's your blowers...it's your blowers...it's your blowers....."
     ]
 
 #Function randomizes the inputted author variable into a confirmation message that is not repeated too often

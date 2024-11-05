@@ -4,30 +4,58 @@
 
 #Lots of processes get repeated several times, mostly for OAuth2 flow, so they've been modularized into funcs.py
 from funcs import *
-import streamlit as st
+# import streamlit as st
+# from streamlit.runtime.scriptrunner import add_script_run_ctx,get_script_run_ctx,ScriptRunner
 #Requests needed to submit Showbot titles, time needed to limit API requests to stay under quota
-import requests,time,traceback,sys
+import requests,time,sys,os
 from googleapiclient.errors import HttpError
+from datetime import datetime
+import pandas as pd
 #Set creator page and read showbot token to prepare to submit. Default is parent directory.
+print('Script Init')
 showbot_channel = 'Frogpants'
+livechatid = sys.argv[1]
+show = sys.argv[2]
 with open('../showbot_token.txt','r') as f:
     token = f.readlines()[0]
-# showbot_channel = 'talizorel'
-# with open('../test_token_showbot.txt','r') as f:
-#     token = f.readlines()[0]
+df_name = f'{show}-{datetime.today().year}-{datetime.today().month}-{datetime.today().day}.csv'
+if os.path.exists(f'archive/{df_name}'):
+    df = pd.read_csv(f'archive/{df_name}',encoding='utf-8')
+    print('Existing df loaded')
+    author_index_showbot,submitted_titles_showbot = build_submission_history(showbot_channel)
+    new_showbot_titles,new_showbot_authors = [],[]
+    for title,author in zip(submitted_titles_showbot,author_index_showbot):
+        if title not in df[df.source == 'showbot'].title.tolist():
+            if title[-1]=='.':
+                title = title[:-1]
+            new_showbot_authors.append(author)
+            new_showbot_titles.append(title)
+    new_df_dict = {
+        'author':new_showbot_authors,
+        'title':new_showbot_titles,
+        'source':['showbot']*len(new_showbot_titles)
+                    }
+    df_to_merge = pd.DataFrame.from_dict(new_df_dict)
+    df = pd.merge(df,df_to_merge,how='outer')
+    author_index,submitted_titles = df.author.values.tolist(),df.title.values.tolist()
+    df.to_csv(f'archive/{df_name}',encoding='utf-8',index=False)
+else:
+    #Scan the associated Showbot page to build a history of submissions, to prevent duplicate submissions
+    #This should only run on a fresh bot boot for the day. It then goes to scrape the existing titles on showbot.
+    author_index,submitted_titles = build_submission_history(showbot_channel)
+    df = pd.DataFrame(columns=['author','title','source','time'])
+    times = []
+    for title in submitted_titles:
+        if title[-1]=='.':
+            i = submitted_titles.index(title)
+            submitted_titles[i]=submitted_titles[i][:-1]
+            times.append(datetime.now())
+    df.author.tolist(),df.title.tolist(),df.source = author_index,submitted_titles,'showbot',times
+    df.to_csv(f'archive/{df_name}',encoding='utf-8',index=False)
 
-#Use selenium to see if channel is live or not.
-# If the stream is live, it will return the streamid
-# streamid = find_stream_id('@ScottJohnson')
-# # streamid = find_stream_id('@Fleurs_')
-# if streamid:
-#     print(f'Live stream detected.\nLive stream id: {streamid}')
-# else:
-#     print('No live stream found.')
-# streamid = 'sFQJp5j3sZI'
 
-#Scan the associated Showbot page to build a history of submissions, to prevent duplicate submissions
-author_index,submitted_titles = build_submission_history(showbot_channel)
+
+#TODO: Format everything into relevant dataframe notation. Add a source column for sanity checks vs showbot and YTbot
 
 #livechatid is submitted in the subprocess call from the streamlit script
 # livechatid = 'Cg0KC0lxOGxIbk5XZ1JBKicKGFVDMGFzUF9TNUZkTzlxTlNTaVhZcXVsdxILSXE4bEhuTldnUkE'
@@ -35,53 +63,57 @@ author_index,submitted_titles = build_submission_history(showbot_channel)
 #Use livechatid to read chat on live stream (read_chat()) then ingest response JSON object (title_search())
 #JSON objects are by default read like dictionariers in Python
 #Repeat every 5 seconds to stay within API quota limit
-def bot(livechatid):
-    try:
-        credentials = build_credentials(client_secrets_file,scopes) #Builds OAuth2 credentials object. Uses existing files or makes new one if not detected. This links the function to the account that follows the URI.
-        youtube = build_yt_obj(credentials) #Common step in calling the API. Always have to build an object on which to call methods.
-        request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
-                "type": "textMessageEvent",
-                "textMessageDetails": {
-                "messageText": "Bot up. Let's roll buttholes!"}}})
+
+try:
+    credentials = build_credentials(client_secrets_file,scopes) #Builds OAuth2 credentials object. Uses existing files or makes new one if not detected. This links the function to the account that follows the URI.
+    youtube = build_yt_obj(credentials) #Common step in calling the API. Always have to build an object on which to call methods.
+    request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
+            "type": "textMessageEvent",
+            "textMessageDetails": {
+            "messageText": "Bot up. Let's roll buttholes!"}}})
         #TODO capture and parse the response code in case the request is denied.
-        response = request.execute()
-        print(response)
-        print('Init')
-        while True:
-            authors,titles = title_search(read_chat(livechatid)) #Poll API for all chat messages, regardless of they've been polled already or not. title_search() already filters for '!s' chat trigger and cleans as needed
-            #Check extracted titles versus previously submitted ones, submit if new
-            for author,title in zip(authors,titles):
-                if title not in submitted_titles: #Check extracted titles versus previously submitted ones, submit if new
-                    author_index.append(author)
-                    submitted_titles.append(title)
-                    print(f'{author}: {title}') #Add new title to list and add author to another list to maintain the order. Print for debugging and monitoring purposes.
-                    st.write(f'{author}: {title}')
-                    author_html,title_html = html_ify(author),html_ify(title) #Prepare link for submission then submit via Requests module
-                    submission_link = f'http://www.showbot.tv/s/add.php?title={title_html}&user={author_html}&channel={showbot_channel}&key={token}'
-                    try:
-                        requests.get(submission_link)
-                    except TimeoutError:
-                        print('Timeout error')
-                    #At this point the title has been submitted. This is one complete function and API call. Confirmation via the .insert() method to send a message is a separate 
-                    #function incurring higher quota useage.
-                    try:
-                        response = send_chat_message(livechatid,author) #The API response in JSON format. Not technically needed but saved in case.
-                        # delay = response['pollingIntervalMillis ']
-                        print(f'Title successfully submitted and confirmed: {author}.') #Generic success message only for the console for debugging and monitoring purposes.
-                    except googleapiclient.errors.HttpError: #For some reason the script can get a 403 response code error when attempting to submit a confirmation response. This block keeps the script from halting if that occurs.
-                        print(f'HTTP Error: [{author}: {title}] failed to submit.')
-                        #This is an experimental approach to handling the 403 error by attempting to resubmit the response asynchronously.
-                        #The 403 errors seemed to have stopped since making the pseudo-service account, so this may be removed in the future.
-                        # print(f'HTTP Error: [{author}: {title}] failed to submit. Trying again in 3 seconds.') 
-                        # asyncio.sleep(3)
-                        # try:
-                        #     response = asyncio.send_async_chat_message(livechatid,author)
-                        # except googleapiclient.errors.HttpError:
-                        #     print(f'Submission of [{author}: {title}] failed.')
-                        # print(traceback.format_exc())           
-            time.sleep(5) #Interval at which the API is polled for all chat messages. Can be adjusted to lower costs but increase delay or vice versa.
-    except googleapiclient.errors.HttpError:
-        print(livechatid)
-        print('No live chat detected, likely because the chat has ended.')
-    except TimeoutError:
-        print('Timeout error.')
+    response = request.execute()
+    print('Loop Init')
+    while True:
+        authors,titles = title_search(read_chat(livechatid)) #Poll API for all chat messages, regardless of they've been polled already or not. title_search() already filters for '!s' chat trigger and cleans as needed
+        #Check extracted titles versus previously submitted ones, submit if new
+        for author,title in zip(authors,titles):
+            if title not in submitted_titles: #Check extracted titles versus previously submitted ones, submit if new
+                author_index.append(author)
+                submitted_titles.append(title.strip())
+                print(f'{author}: {title.strip()}') #Add new title to list and add author to another list to maintain the order. Print for debugging and monitoring purposes.
+                # st.write(f'{author}: {title}')
+                author_html,title_html = html_ify(author),html_ify(title.strip()) #Prepare link for submission then submit via Requests module
+                submission_link = f'http://www.showbot.tv/s/add.php?title={title_html}&user={author_html}&channel={showbot_channel}&key={token}'
+                try:
+                    requests.get(submission_link)
+                    title_merge_df = pd.DataFrame(columns=['author','title','source'])
+                    title_merge_df['author'] = [author]
+                    title_merge_df['title'] = [title.strip()]
+                    title_merge_df['source'] = ['YouTube']
+                    title_merge_df['time'] = [datetime.now()]
+                    df = pd.merge(df,title_merge_df,how='outer')
+                    df.to_csv(f'archive/{df_name}',encoding='utf-8',index=False)
+                except TimeoutError:
+                    print(f'Timeout error while sending to showbot [{author} : {title}]')
+                    # st.write(f'Timeout error while sending to showbot [{author} : {title}]')
+                    pass
+                #At this point the title has been submitted. This is one complete function and API call. Confirmation via the .insert() method to send a message is a separate 
+                #function incurring higher quota useage.
+                # try:
+                response = send_chat_message(livechatid,author) #The API response in JSON format. Not technically needed but saved in case.
+                print(f'Title successfully submitted and confirmed: {author}.') #Generic success message only for the console for debugging and monitoring purposes.
+                # except HttpError: #For some reason the script can get a 403 response code error when attempting to submit a confirmation response. This block keeps the script from halting if that occurs.
+                #     print(f'HTTP Error: [{author}: {title}] submitted but failed to confirm. Likely a 403 error.')
+                #     pass
+                    # st.write(f'HTTP Error: [{author}: {title}] submitted but failed to confirm. Likely a 403 error.')
+        time.sleep(5) #Interval at which the API is polled for all chat messages. Can be adjusted to lower costs but increase delay or vice versa.
+except HttpError:
+    # print(livechatid)
+    print(f'No live chat detected via value: {livechatid}, likely because the chat has ended. The bot can safely be restarted again if you are sure the livestream is indeed live.')
+    # raise ValueError(f'No live chat detected via value: {livechatid}, likely because the chat has ended. The bot can safely be restarted again if you are sure the livestream is indeed live.')
+    # st.write(f'No live chat detected via value: {livechatid}, likely because the chat has ended. The bot can safely be restarted again if you are sure the livestream is indeed live.')
+except TimeoutError:
+    print('In-script timeout error. The bot can safely be restarted again.')
+    os.environ['pid']=''
+    # st.write('In-script timeout error. The bot can safely be restarted again.')

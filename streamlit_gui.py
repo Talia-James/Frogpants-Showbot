@@ -2,7 +2,14 @@
 import streamlit as st
 from funcs import *
 import shelve
-from streamlit_YT_showbot import bot
+from signal import SIGTERM
+from subprocess import Popen
+from streamlit.runtime.scriptrunner import add_script_run_ctx,get_script_run_ctx
+import psutil
+from datetime import datetime
+import pandas as pd
+
+
 
 
 st.set_page_config(
@@ -16,6 +23,7 @@ st.set_page_config(
 
 def main():
     streamid = False
+    ctx = get_script_run_ctx(suppress_warning=True)
     st.title('Find the stream ID')
     st.write('''
              The API needs a livechatid to be able to poll for messages and send confirmations, and to find that it needs a streamid.
@@ -66,13 +74,17 @@ def main():
             if 'livechatid' not in st.session_state:
                 st.session_state['livechatid'] = livechatid
     if st.button('Find chat ID'):
-        livechatid = find_chat_id(streamid)
-        if livechatid is not None:
-            st.write(f'Success!')
-            st.write(f'livechatid: {livechatid}')
-            st.session_state['livechatid'] = livechatid
-            with shelve.open('params') as f:
-                f['livechatid'] = livechatid
+        try:
+            livechatid = find_chat_id(streamid)
+            if livechatid is not None:
+                st.write(f'Success!')
+                st.write(f'livechatid: {livechatid}')
+                st.session_state['livechatid'] = livechatid
+                with shelve.open('params') as f:
+                    f['livechatid'] = livechatid
+        except KeyError:
+            print('No activeLiveChatId value found. The video link works, but the livestream has likely ended and thus has no active chat.')
+            st.write('No activeLiveChatId value found. The video link works, but the livestream has likely ended and thus has no active chat.')      
     else:
         st.write(f'No stream detected at https://www.youtube.com/watch?v={streamid} (or the script was interacted with and re-ran without setting this value)')
     livechatid = st.text_input(label='Manual livechatid entry',value=livechatid)
@@ -80,23 +92,62 @@ def main():
         with shelve.open('params') as f:
             f['livechatid'] = livechatid
     st.title('Spin up the bot')
-    if st.button('Launch bot.'):
-        bot(livechatid)
-        # with shelve.open('params') as f:
-        #     process = f['process']
-        # if process == None:
-        #     command = ['python','test.py']
-        #     # output_file = "program_output.txt"
-        #     # process = spm.run(command,output_file=output_file)
-        #     process = Thread(target=farts,daemon=False)
-        #     add_script_run_ctx(process)
-        #     process.start()
-        # try:
-        #     for line in process.stdout:
-        #         st.text(line)
-        #         print(line)
-        # except UnboundLocalError:
-        #     st.write('Not bot output detected.')
+    show = st.text_input(label='Show',value='TMS')
+    if bool(os.environ['pid']) == False:
+        if st.button('Launch bot.'):
+            p = Popen(['python','streamlit_YT_showbot.py',livechatid,show])
+            add_script_run_ctx(p,ctx)
+            st.write(p.pid)
+            os.environ['pid'] = str(p.pid)
+            print(p.pid)
+            st.rerun()
+    else:
+        pid_exists = psutil.pid_exists(int(os.environ['pid']))
+        if bool(os.environ['pid']):
+            if pid_exists:
+                st.write('Existing process detected.')
+                st.write(f'Bot Process ID: {os.environ['pid']}')
+                if st.button(label='Terminate process'):
+                    os.kill(int(os.environ['pid']),SIGTERM)
+                    os.environ['pid']=''
+                    st.write('Process terminated.')
+                    if st.button('Refresh page.'):
+                        st.rerun()
+            else:
+                st.write('Process ID found in App memory but not running on system.')
+                if st.button('Click to refresh page and refresh process ID'):
+                    os.environ['pid']=''
+                    st.rerun()
+        else:
+            st.write('Previous process ID no longer active. The bot likely failed to initialize or crashed. Resetting PID.')
+            print('Previous process ID no longer active. The bot likely failed to initialize or crashed. Resetting PID.')
+            os.environ['pid'] = ''
+            if st.button(label='Refresh page'):
+                st.rerun()
+    df_name = f'{show}-{datetime.today().year}-{datetime.today().month}-{datetime.today().day}.csv'
+    if os.path.exists(f'archive/{df_name}'):
+        if st.button(label='Existing chat history found. Click to display.'):
+            df_toshow = pd.read_csv(f'archive/{df_name}',encoding='utf-8')
+            st.dataframe(df_toshow)
+    # with st.expander(label='Experimental custom message sending'):
+    #     st.title('Send custom message')
+    #     st.write("While the function works fine, it's still a little experimental with how the process plays with this GUI interface package I'm using. If you send a message, the script re-runs top-down which may kill the bot background process--I'm still testing this out.")
+    #     if 'livechatid' in st.session_state:
+    #         message = st.text_input(label='Message text')
+    #         if st.button(label='Send a message outside the bot loop.'):
+    #             credentials = build_credentials(client_secrets_file,scopes)
+    #             youtube = build_yt_obj(credentials,api_service_name, api_version,module=googleapiclient.discovery)
+    #             request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
+    #             "type": "textMessageEvent",
+    #             "textMessageDetails": {
+    #                 "messageText": message}}})
+    #             response = request.execute()
+    #             try:
+    #                 sent_message = response['snippet']['displayMessage']
+    #                 st.write(f'Your message: {sent_message} was successfully sent!')
+    #             except KeyError:
+    #                 st.write(f'Something went wrong, and it looks like {message} did not send correctly.')
+
     # with st.expander(label='Experimental custom message sending'):
     #     st.title('Send custom message')
     #     st.write("While the function works fine, it's still a little experimental with how the process plays with this GUI interface package I'm using. If you send a message, the script re-runs top-down which may kill the bot background process--I'm still testing this out.")
@@ -117,4 +168,6 @@ def main():
     #                 st.write(f'Something went wrong, and it looks like {message} did not send correctly.')
 
 if __name__ == '__main__':
+    if 'pid' not in os.environ:
+        os.environ['pid'] = ''
     main()

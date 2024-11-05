@@ -2,6 +2,10 @@ import discord,os
 from discord.ext import commands
 from funcs import *
 from random import choice
+import wordcloud
+import pandas as pd
+from datetime import datetime
+import matplotlib.pyplot as plt
 
 showbot_channel,token = 'Frogpants','Nhrj6amcz4AqiSP6AVv5YhhQX8OhJ6wO'
 url = f'https://tms.showbot.tv/'
@@ -51,6 +55,20 @@ async def guild_info(ctx):
 async def showbot(ctx):
     await ctx.send(f"Don't forget to vote for titles! {url}")
 
+@bot.command()
+async def wordcloud(ctx):
+    show = 'TMS'
+    df_name = f'{show}-{datetime.today().year}-{datetime.today().month}-{datetime.today().day}.csv'
+    cloud_name = f'{show}-{datetime.today().year}-{datetime.today().month}-{datetime.today().day}.png'
+    df = pd.read_csv(f'{df_name}',encoding='utf-8')
+    text = ' '.join(df.title.tolist())
+    cloud = wordcloud.WordCloud().generate(text)
+    plt.axis("off")
+    plt.savefig(f'word_clouds/{cloud_name}', bbox_inches='tight')
+    await ctx.send(f"Word cloud of today's show titles!")
+    await ctx.send(file=discord.File(f'word_clouds/{cloud_name}'))
+
+    
 @bot.command()
 async def bacon(ctx):
     rando_gif = choice(bacon_gifs)
