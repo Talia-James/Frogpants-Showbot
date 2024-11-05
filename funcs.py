@@ -6,7 +6,7 @@ from google.auth.exceptions import RefreshError
 import google_auth_oauthlib.flow
 from google.oauth2.credentials import Credentials
 import googleapiclient.discovery
-import os,requests,asyncio
+import os,requests#,asyncio
 from random import choice
 
 #Minimum scopes needed for functions. May even be redundent depending on desired functions

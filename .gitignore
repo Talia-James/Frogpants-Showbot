@@ -131,6 +131,7 @@ venv/*
 ENV/
 env.bak/
 venv.bak/
+.vscode/
 
 # Spyder project settings
 .spyderproject
@@ -164,4 +165,4 @@ oauth2_troubleshoot.ipynb
 function_testing.ipynb
 test_func.py
 program_output.txt
-.temp
+.temp/

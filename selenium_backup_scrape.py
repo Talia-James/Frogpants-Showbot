@@ -15,7 +15,7 @@ from selenium.common.exceptions import StaleElementReferenceException
 
 driver = webdriver.Chrome()#options=chrome_options)
 
-chat_link = "https://www.youtube.com/live_chat?continuation=0ofMyAOAARpeQ2lrcUp3b1lWVU5KUlVsU2VpMUxjRmx2UlZCdWNrNVJkWGxJZDBwM0VndHRSRUZZTmxkVlZtaERPQm9UNnFqZHVRRU5DZ3R0UkVGWU5sZFZWbWhET0NBQk1BQSUzRDABggEICAQYAiAAKACIAQGgAd_JtIqQ0IgDqAEAsgEA&dark_theme=true&authuser=0"
+chat_link = "https://www.youtube.com/live_chat?continuation=0ofMyAOAARpeQ2lrcUp3b1lWVU5KUlVsU2VpMUxjRmx2UlZCdWNrNVJkWGxJZDBwM0VndEpSV2xoU1c0dFRURnNNQm9UNnFqZHVRRU5DZ3RKUldsaFNXNHRUVEZzTUNBQk1BQSUzRDABggEICAQYAiAAKACIAQGgAan07dziw4kDqAEAsgEA&dark_theme=true&authuser=0"
 
 token = 'Nhrj6amcz4AqiSP6AVv5YhhQX8OhJ6wO'
 
