@@ -205,8 +205,11 @@ randomized_messages = [
     f'Thanks for being a damn distracting freak, {author}.',
     f"Did you know your submission is not automatically upvoted? Vote for yourself, {author}, it's totally not masturbation!",
     f'Your submission is never too early for a fish sandwich, {author}.',
-    f"Title submitted, {author}. Fert!"
-    f"Great title, {author}, almost like [bzzt] it's your blowers...it's your blowers...it's your blowers...it's your blowers...it's your blowers...it's your blowers....."
+    f"Title submitted, {author}. Fert!",
+    f"Great title, {author}, almost like [bzzt] it's your blowers...it's your blowers...it's your blowers...it's your blowers...it's your blowers...it's your blowers.....",
+    f"Okay I'll give you that {author}, but you shall receive NO treaty, NO vaccine, and NO LIEUTENANT. YAR!",
+    f'Do you like rice, {author}? THEN YOU CAN EAT RICE!',
+    f'Unlike the poo bag lady, we are aware of what you are putting in our face {author}.'
     ]
 
 #Function randomizes the inputted author variable into a confirmation message that is not repeated too often
@@ -234,6 +237,7 @@ def send_chat_message(livechatid,author,api_service_name=api_service_name,api_ve
             "type": "textMessageEvent",
             "textMessageDetails": {
                 "messageText": confirmation_message}}})
+    print(request)
     response = request.execute()
     print('Submission attempted.')
     return response

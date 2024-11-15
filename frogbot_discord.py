@@ -56,15 +56,16 @@ async def showbot(ctx):
     await ctx.send(f"Don't forget to vote for titles! {url}")
 
 @bot.command()
-async def wordcloud(ctx):
+async def wc(ctx):
     show = 'TMS'
     df_name = f'{show}-{datetime.today().year}-{datetime.today().month}-{datetime.today().day}.csv'
     cloud_name = f'{show}-{datetime.today().year}-{datetime.today().month}-{datetime.today().day}.png'
-    df = pd.read_csv(f'{df_name}',encoding='utf-8')
+    df = pd.read_csv(f'archive/{df_name}',encoding='utf-8')
     text = ' '.join(df.title.tolist())
     cloud = wordcloud.WordCloud().generate(text)
-    plt.axis("off")
-    plt.savefig(f'word_clouds/{cloud_name}', bbox_inches='tight')
+    cloud.to_file(f'word_clouds/{cloud_name}')
+    # plt.axis("off")
+    # plt.savefig(f'word_clouds/{cloud_name}', bbox_inches='tight')
     await ctx.send(f"Word cloud of today's show titles!")
     await ctx.send(file=discord.File(f'word_clouds/{cloud_name}'))
 
