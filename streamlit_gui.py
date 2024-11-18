@@ -104,10 +104,13 @@ def main():
     if bool(os.environ['pid']) == False:
         bot_button_,quiet_button_ = st.columns(2)
         with quiet_button_:
-            st.checkbox(label='Launch quietly')
+            quiet = st.checkbox(label='Launch quietly')
         with bot_button_:
             if st.button('Launch bot.'):
-                p = Popen(['python','streamlit_YT_showbot.py',livechatid,show])
+                bot_args = ['python','streamlit_YT_showbot.py',livechatid,show]
+                if quiet:
+                    bot_args.append('quiet')
+                p = Popen(bot_args)
                 add_script_run_ctx(p,ctx)
                 st.write(p.pid)
                 os.environ['pid'] = str(p.pid)
@@ -140,9 +143,23 @@ def main():
 
     
     with st.expander(label='Promotional Messages',expanded=False):
-        st.subheader('Functions to send promotional messages in the chat, normally at the end of the show.') #Experimental until I confirm YouTube doesn't block a bunch of links
+        st.write('Functions to send promotional messages in the chat, normally at the end of the show.') #Experimental until I confirm YouTube doesn't block a bunch of links
         if 'livechatid' in st.session_state:
-            if st.button(label="Send relevant Patreon links."):
+            if st.button(label="Send relevant Patreon links.",key='showbot-vote-button'):
+                credentials = build_credentials(client_secrets_file,scopes)
+                youtube = build_yt_obj(credentials,api_service_name, api_version,module=googleapiclient.discovery)
+                request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
+                "type": "textMessageEvent",
+                "textMessageDetails": {
+                    "messageText": "Vote on show titles at https://tms.showbot.tv/ !"}}})
+                response = request.execute()
+                try:
+                    sent_message = response['snippet']['displayMessage']
+                    print(f'Sent: {sent_message}')
+                    st.write(f'Your message was successfully sent!')
+                except KeyError:
+                    st.write(f'Something went wrong, and it looks like your message did not send correctly.')
+            if st.button(label="Send relevant Patreon links.",key='patreon-button'):
                 message_raw = ['TMS is a collaborative effort! ']
                 i = 0
                 for patreon in patreon_links:
@@ -171,7 +188,6 @@ def main():
                     st.write(f'Your message was successfully sent!')
                 except KeyError:
                     st.write(f'Something went wrong, and it looks like your message did not send correctly.')
-
     if os.path.exists(f'archive/{df_name}'):
         if st.button(label='Existing chat history found. Click to display.'):
             df_toshow = pd.read_csv(f'archive/{df_name}',encoding='utf-8')

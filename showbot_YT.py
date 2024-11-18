@@ -12,19 +12,15 @@ from googleapiclient.errors import HttpError
 showbot_channel = 'Frogpants'
 with open('../showbot_token.txt','r') as f:
     token = f.readlines()[0]
-# showbot_channel = 'talizorel'
-# with open('../test_token_showbot.txt','r') as f:
-#     token = f.readlines()[0]
+
 
 #Use selenium to see if channel is live or not.
 # If the stream is live, it will return the streamid
 streamid = find_stream_id('@ScottJohnson')
-# streamid = find_stream_id('@Fleurs_')
 if streamid:
     print(f'Live stream detected.\nLive stream id: {streamid}')
 else:
     print('No live stream found.')
-# streamid = 'Kjv5ymk1NZA'
 
 #The streamid is needed to find the livechatid (sometimes activeLiveChatId depending on type of API request)
 #While the above function is useful, it is not neded. You can easily find the streamid of any stream
