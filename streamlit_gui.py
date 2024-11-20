@@ -21,6 +21,14 @@ st.set_page_config(
     }
 )
 
+patreon_links = {
+    'TMS':'https://www.patreon.com/tms',
+    'Frogpants':'https://www.patreon.com/frogpants',
+    'Brian':'https://www.patreon.com/coverville',
+    'Biocow':'https://www.patreon.com/biocow',
+    'Talia':'https://www.patreon.com/TaliaJames'
+}
+
 def main():
     streamid = False
     ctx = get_script_run_ctx(suppress_warning=True)
@@ -92,15 +100,22 @@ def main():
         with shelve.open('params') as f:
             f['livechatid'] = livechatid
     st.title('Spin up the bot')
-    show = st.text_input(label='Show',value='TMS')
+    show = st.selectbox(label='Show',options=['TMS','The Monday Show'],index=0)
     if bool(os.environ['pid']) == False:
-        if st.button('Launch bot.'):
-            p = Popen(['python','streamlit_YT_showbot.py',livechatid,show])
-            add_script_run_ctx(p,ctx)
-            st.write(p.pid)
-            os.environ['pid'] = str(p.pid)
-            print(p.pid)
-            st.rerun()
+        bot_button_,quiet_button_ = st.columns(2)
+        with quiet_button_:
+            quiet = st.checkbox(label='Launch quietly')
+        with bot_button_:
+            if st.button('Launch bot.'):
+                bot_args = ['python','streamlit_YT_showbot.py',livechatid,show]
+                if quiet:
+                    bot_args.append('quiet')
+                p = Popen(bot_args)
+                add_script_run_ctx(p,ctx)
+                st.write(p.pid)
+                os.environ['pid'] = str(p.pid)
+                print(p.pid)
+                st.rerun()
     else:
         pid_exists = psutil.pid_exists(int(os.environ['pid']))
         if bool(os.environ['pid']):
@@ -125,47 +140,65 @@ def main():
             if st.button(label='Refresh page'):
                 st.rerun()
     df_name = f'{show}-{datetime.today().year}-{datetime.today().month}-{datetime.today().day}.csv'
+
+    
+    with st.expander(label='Promotional Messages',expanded=False):
+        st.write('Functions to send promotional messages in the chat, normally at the end of the show.') #Experimental until I confirm YouTube doesn't block a bunch of links
+        if 'livechatid' in st.session_state:
+            if st.button(label="Send Showbot link",key='showbot-vote-button'):
+                credentials = build_credentials(client_secrets_file,scopes)
+                youtube = build_yt_obj(credentials,api_service_name, api_version,module=googleapiclient.discovery)
+                request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
+                "type": "textMessageEvent",
+                "textMessageDetails": {
+                    "messageText": "Don't forget to vote on titles at the showbot website!"}}})
+                response = request.execute()
+                try:
+                    sent_message = response['snippet']['displayMessage']
+                    print(response)
+                    print(f'Sent: {sent_message}')
+                    st.write(f'Your message was successfully sent!')
+                except KeyError:
+                    print(response)
+                    st.write(f'Something went wrong, and it looks like your message did not send correctly.')
+            if st.button(label="Send relevant Patreon links.",key='patreon-button'):
+                message_raw = ['TMS is a collaborative effort! ']
+                i = 0
+                for patreon in patreon_links:
+                    i += 1
+                    link = patreon_links[patreon]
+                    if patreon == 'TMS':
+                        message = f'Support TMS directly at {link}, '
+                    elif patreon == 'Frogpants':
+                        message = f'or support the whole network at: {link}. Support individuals: '
+                    elif i == len(patreon_links):
+                        message = f' and {patreon} at {link}.'
+                    else:
+                        message = f' {patreon} at {link},'
+                    message_raw.append(message)
+                message_send = ''.join(message_raw)
+                credentials = build_credentials(client_secrets_file,scopes)
+                youtube = build_yt_obj(credentials,api_service_name, api_version,module=googleapiclient.discovery)
+                request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
+                "type": "textMessageEvent",
+                "textMessageDetails": {
+                    "messageText": message_send}}})
+                response = request.execute()
+                try:
+                    sent_message = response['snippet']['displayMessage']
+                    print(f'Sent: {sent_message}')
+                    st.write(f'Your message was successfully sent!')
+                except KeyError:
+                    st.write(f'Something went wrong, and it looks like your message did not send correctly.')
     if os.path.exists(f'archive/{df_name}'):
         if st.button(label='Existing chat history found. Click to display.'):
             df_toshow = pd.read_csv(f'archive/{df_name}',encoding='utf-8')
-            st.dataframe(df_toshow)
-    # with st.expander(label='Experimental custom message sending'):
-    #     st.title('Send custom message')
-    #     st.write("While the function works fine, it's still a little experimental with how the process plays with this GUI interface package I'm using. If you send a message, the script re-runs top-down which may kill the bot background process--I'm still testing this out.")
-    #     if 'livechatid' in st.session_state:
-    #         message = st.text_input(label='Message text')
-    #         if st.button(label='Send a message outside the bot loop.'):
-    #             credentials = build_credentials(client_secrets_file,scopes)
-    #             youtube = build_yt_obj(credentials,api_service_name, api_version,module=googleapiclient.discovery)
-    #             request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
-    #             "type": "textMessageEvent",
-    #             "textMessageDetails": {
-    #                 "messageText": message}}})
-    #             response = request.execute()
-    #             try:
-    #                 sent_message = response['snippet']['displayMessage']
-    #                 st.write(f'Your message: {sent_message} was successfully sent!')
-    #             except KeyError:
-    #                 st.write(f'Something went wrong, and it looks like {message} did not send correctly.')
+            # st.dataframe(df_toshow)
+            for i in range(len(df_toshow)):
+                entry = df_toshow.loc[i]
+                author,title,source = entry.author,entry.title,entry.source
+                st.write(f'{author}: {title} ({source})')
 
-    # with st.expander(label='Experimental custom message sending'):
-    #     st.title('Send custom message')
-    #     st.write("While the function works fine, it's still a little experimental with how the process plays with this GUI interface package I'm using. If you send a message, the script re-runs top-down which may kill the bot background process--I'm still testing this out.")
-    #     if 'livechatid' in st.session_state:
-    #         message = st.text_input(label='Message text')
-    #         if st.button(label='Send a message outside the bot loop.'):
-    #             credentials = build_credentials(client_secrets_file,scopes)
-    #             youtube = build_yt_obj(credentials,api_service_name, api_version,module=googleapiclient.discovery)
-    #             request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
-    #             "type": "textMessageEvent",
-    #             "textMessageDetails": {
-    #                 "messageText": message}}})
-    #             response = request.execute()
-    #             try:
-    #                 sent_message = response['snippet']['displayMessage']
-    #                 st.write(f'Your message: {sent_message} was successfully sent!')
-    #             except KeyError:
-    #                 st.write(f'Something went wrong, and it looks like {message} did not send correctly.')
 
 if __name__ == '__main__':
     if 'pid' not in os.environ:
