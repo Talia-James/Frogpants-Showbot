@@ -91,7 +91,7 @@ def find_stream_id(channel_name):
     else:
         return False
 
-#Builds OAuth2 flow and credentials. Requires a client secrets file downlaoded from the Google Develeoper console.
+#Builds OAuth2 flow and credentials. Requires a client secrets file downloaded from the Google Develeoper console.
 #Checks if authorization has already been done, and if not, opens a browser to allow OAuth2 approval for your signed-in Google account.
 #Authorization can only be done locally (localhost) with the .run_local_server(port=0) method. Your own authentication server IP would be required to
 #run it externally. In such a case you would need to provide the opened port in the port= parameter and the IP address would be your router or
@@ -205,11 +205,8 @@ randomized_messages = [
     f'Thanks for being a damn distracting freak, {author}.',
     f"Did you know your submission is not automatically upvoted? Vote for yourself, {author}, it's totally not masturbation!",
     f'Your submission is never too early for a fish sandwich, {author}.',
-    f"Title submitted, {author}. Fert!",
-    f"Great title, {author}, almost like [bzzt] it's your blowers...it's your blowers...it's your blowers...it's your blowers...it's your blowers...it's your blowers.....",
-    f"Okay I'll give you that {author}, but you shall receive NO treaty, NO vaccine, and NO LIEUTENANT. YAR!",
-    f'Do you like rice, {author}? THEN YOU CAN EAT RICE!',
-    f'Unlike the poo bag lady, we are aware of what you are putting in our face {author}.'
+    f"Title submitted, {author}. Fert!"
+    f"Great title, {author}, almost like [bzzt] it's your blowers...it's your blowers...it's your blowers...it's your blowers...it's your blowers...it's your blowers....."
     ]
 
 #Function randomizes the inputted author variable into a confirmation message that is not repeated too often
@@ -237,23 +234,10 @@ def send_chat_message(livechatid,author,api_service_name=api_service_name,api_ve
             "type": "textMessageEvent",
             "textMessageDetails": {
                 "messageText": confirmation_message}}})
-    print(request)
     response = request.execute()
     print('Submission attempted.')
     return response
 
-
-#I was briefly testing asynchronous error handling to try and resubmit a 403 denied error, but I seem to have solved the issue. Keeping in case.
-# async def send_async_chat_message(livechatid,author,api_service_name=api_service_name,api_version=api_version,client_secrets_file=client_secrets_file,credentials=None,scopes=scopes,module = googleapiclient.discovery):
-#     credentials = build_credentials(client_secrets_file,scopes)
-#     youtube = build_yt_obj(module,credentials,api_service_name, api_version)
-#     confirmation_message = randomize_confirmation(author)
-#     request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
-#             "type": "textMessageEvent",
-#             "textMessageDetails": {
-#                 "messageText": confirmation_message}}})
-#     response = request.execute()
-#     return response
 
 #TODO: The credentials variable could possibly be saved and passed within the script and might not need to be rebuilt each time.
 #In general the OAuth2 flow could likely be streamlined a little bit.

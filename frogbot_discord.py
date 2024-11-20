@@ -1,4 +1,4 @@
-import discord,os
+import discord,os,asyncio
 from discord.ext import commands
 from funcs import *
 from random import choice
@@ -7,6 +7,7 @@ import pandas as pd
 from datetime import datetime
 import matplotlib.pyplot as plt
 
+frogpants_channel = 'https://www.youtube.com/channel/UCIEIRz-KpYoEPnrNQuyHwJw'
 showbot_channel,token = 'Frogpants','Nhrj6amcz4AqiSP6AVv5YhhQX8OhJ6wO'
 url = f'https://tms.showbot.tv/'
 with open('../frogbot_token.txt') as f:
@@ -17,12 +18,19 @@ bot = commands.Bot(command_prefix='!',intents=intents)
 intents.message_content = True
 
 author_index,submitted_titles = build_submission_history(showbot_channel)
-
 bacon_gifs = os.listdir('bacon_gifs')
 
 @bot.event
 async def on_ready():
     print("Let's roll, buttholes!")
+
+@bot.command()
+async def live(ctx):
+    detected,livestream_link = detect_stream(frogpants_channel)
+    if detected:
+        await ctx.send(f'Looks like Frogpants has gone live! Watch at: {livestream_link}')
+    else:
+        await ctx.send("I don't seem to be able to find a live stream for Frogpants.")
 
 @bot.command()
 async def s(ctx):
@@ -34,7 +42,6 @@ async def s(ctx):
     author_html,title_html = html_ify(author),html_ify(title) #Prepare link for submission then submit via Requests module
     submission_link = f'http://www.showbot.tv/s/add.php?title={title_html}&user={author_html}&channel={showbot_channel}&key={token}'
     try:
-        # print(submission_link)
         submission = requests.get(submission_link)
         print(submission)
         confirmation_message = randomize_confirmation(author,disc_format=True)
@@ -64,12 +71,9 @@ async def wc(ctx):
     text = ' '.join(df.title.tolist())
     cloud = wordcloud.WordCloud().generate(text)
     cloud.to_file(f'word_clouds/{cloud_name}')
-    # plt.axis("off")
-    # plt.savefig(f'word_clouds/{cloud_name}', bbox_inches='tight')
     await ctx.send(f"Word cloud of today's show titles!")
     await ctx.send(file=discord.File(f'word_clouds/{cloud_name}'))
 
-    
 @bot.command()
 async def bacon(ctx):
     rando_gif = choice(bacon_gifs)

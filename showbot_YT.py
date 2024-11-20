@@ -6,8 +6,8 @@
 #Lots of processes get repeated several times, mostly for OAuth2 flow, so they've been modularized into funcs.py
 from funcs import *
 #Requests needed to submit Showbot titles, time needed to limit API requests to stay under quota
-import requests,time,traceback
-from googleapiclient.errors import HttpError
+import requests,time,sys
+# from googleapiclient.errors import HttpError
 #Set creator page and read showbot token to prepare to submit. Default is parent directory.
 showbot_channel = 'Frogpants'
 with open('../showbot_token.txt','r') as f:
@@ -36,19 +36,23 @@ livechatid = find_chat_id(streamid)
 #Scan the associated Showbot page to build a history of submissions, to prevent duplicate submissions
 author_index,submitted_titles = build_submission_history(showbot_channel)
 
-
+if 'quiet' in sys.argv:
+    quiet = True
+else:
+    quiet = False
 #Use livechatid to read chat on live stream (read_chat()) then ingest response JSON object (title_search())
 #JSON objects are by default read like dictionaries in Python
 #Repeat every 5 seconds to stay within API quota limit
 try:
-    credentials = build_credentials(client_secrets_file,scopes) #Builds OAuth2 credentials object. Uses existing files or makes new one if not detected. This links the function to the account that follows the URI.
-    youtube = build_yt_obj(credentials) #Common step in calling the API. Always have to build an object on which to call methods.
-    request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
-            "type": "textMessageEvent",
-            "textMessageDetails": {
-            "messageText": "Bot up. Let's roll buttholes!"}}})
-    #TODO capture and parse the response code in case the request is denied.
-    response = request.execute()
+    if not quiet:
+        credentials = build_credentials(client_secrets_file,scopes) #Builds OAuth2 credentials object. Uses existing files or makes new one if not detected. This links the function to the account that follows the URI.
+        youtube = build_yt_obj(credentials) #Common step in calling the API. Always have to build an object on which to call methods.
+        request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
+                "type": "textMessageEvent",
+                "textMessageDetails": {
+                "messageText": "Bot up. Let's roll buttholes!"}}})
+        #TODO capture and parse the response code in case the request is denied.
+        response = request.execute()
     print('Init')
     while True:
         authors,titles = title_search(read_chat(livechatid)) #Poll API for all chat messages, regardless of they've been polled already or not. title_search() already filters for '!s' chat trigger and cleans as needed
