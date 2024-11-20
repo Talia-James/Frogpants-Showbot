@@ -145,19 +145,21 @@ def main():
     with st.expander(label='Promotional Messages',expanded=False):
         st.write('Functions to send promotional messages in the chat, normally at the end of the show.') #Experimental until I confirm YouTube doesn't block a bunch of links
         if 'livechatid' in st.session_state:
-            if st.button(label="Send relevant Patreon links.",key='showbot-vote-button'):
+            if st.button(label="Send Showbot link",key='showbot-vote-button'):
                 credentials = build_credentials(client_secrets_file,scopes)
                 youtube = build_yt_obj(credentials,api_service_name, api_version,module=googleapiclient.discovery)
                 request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
                 "type": "textMessageEvent",
                 "textMessageDetails": {
-                    "messageText": "Vote on show titles at https://tms.showbot.tv/ !"}}})
+                    "messageText": "Don't forget to vote on titles at the showbot website!"}}})
                 response = request.execute()
                 try:
                     sent_message = response['snippet']['displayMessage']
+                    print(response)
                     print(f'Sent: {sent_message}')
                     st.write(f'Your message was successfully sent!')
                 except KeyError:
+                    print(response)
                     st.write(f'Something went wrong, and it looks like your message did not send correctly.')
             if st.button(label="Send relevant Patreon links.",key='patreon-button'):
                 message_raw = ['TMS is a collaborative effort! ']
