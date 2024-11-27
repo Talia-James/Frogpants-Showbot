@@ -42,11 +42,13 @@ def build_headless():
 def build_submission_history(showbot_channel):
     url = f'https://tms.showbot.tv/s/checkTitlesBlob.php?channel={showbot_channel}'
     hist_json = requests.get(url).json()
-    authors,titles = [],[]
+    authors,titles,times = [],[],[]
     for entry in hist_json['titles'][:-1]:
         author,title = entry['info'][0]['user'],entry['info'][0]['title']
         authors.append(author)
+        title = title.replace('&#039;',"'")
         titles.append(title)
+        # times.append('Scraped')
     print(f'Titles scraped for Showbot.tv channel: {showbot_channel} ')
     return authors,titles
 
@@ -205,7 +207,7 @@ randomized_messages = [
     f'Thanks for being a damn distracting freak, {author}.',
     f"Did you know your submission is not automatically upvoted? Vote for yourself, {author}, it's totally not masturbation!",
     f'Your submission is never too early for a fish sandwich, {author}.',
-    f"Title submitted, {author}. Fert!"
+    f"Title submitted, {author}. Fert!",
     f"Great title, {author}, almost like [bzzt] it's your blowers...it's your blowers...it's your blowers...it's your blowers...it's your blowers...it's your blowers....."
     ]
 

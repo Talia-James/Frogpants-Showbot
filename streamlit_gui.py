@@ -161,35 +161,35 @@ def main():
                 except KeyError:
                     print(response)
                     st.write(f'Something went wrong, and it looks like your message did not send correctly.')
-            if st.button(label="Send relevant Patreon links.",key='patreon-button'):
-                message_raw = ['TMS is a collaborative effort! ']
-                i = 0
-                for patreon in patreon_links:
-                    i += 1
-                    link = patreon_links[patreon]
-                    if patreon == 'TMS':
-                        message = f'Support TMS directly at {link}, '
-                    elif patreon == 'Frogpants':
-                        message = f'or support the whole network at: {link}. Support individuals: '
-                    elif i == len(patreon_links):
-                        message = f' and {patreon} at {link}.'
-                    else:
-                        message = f' {patreon} at {link},'
-                    message_raw.append(message)
-                message_send = ''.join(message_raw)
-                credentials = build_credentials(client_secrets_file,scopes)
-                youtube = build_yt_obj(credentials,api_service_name, api_version,module=googleapiclient.discovery)
-                request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
-                "type": "textMessageEvent",
-                "textMessageDetails": {
-                    "messageText": message_send}}})
-                response = request.execute()
-                try:
-                    sent_message = response['snippet']['displayMessage']
-                    print(f'Sent: {sent_message}')
-                    st.write(f'Your message was successfully sent!')
-                except KeyError:
-                    st.write(f'Something went wrong, and it looks like your message did not send correctly.')
+            # if st.button(label="Send relevant Patreon links.",key='patreon-button'):
+            #     message_raw = ['TMS is a collaborative effort! ']
+            #     i = 0
+            #     for patreon in patreon_links:
+            #         i += 1
+            #         link = patreon_links[patreon]
+            #         if patreon == 'TMS':
+            #             message = f'Support TMS directly at {link}, '
+            #         elif patreon == 'Frogpants':
+            #             message = f'or support the whole network at: {link}. Support individuals: '
+            #         elif i == len(patreon_links):
+            #             message = f' and {patreon} at {link}.'
+            #         else:
+            #             message = f' {patreon} at {link},'
+            #         message_raw.append(message)
+            #     message_send = ''.join(message_raw)
+            #     credentials = build_credentials(client_secrets_file,scopes)
+            #     youtube = build_yt_obj(credentials,api_service_name, api_version,module=googleapiclient.discovery)
+            #     request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
+            #     "type": "textMessageEvent",
+            #     "textMessageDetails": {
+            #         "messageText": message_send}}})
+            #     response = request.execute()
+            #     try:
+            #         sent_message = response['snippet']['displayMessage']
+            #         print(f'Sent: {sent_message}')
+            #         st.write(f'Your message was successfully sent!')
+            #     except KeyError:
+            #         st.write(f'Something went wrong, and it looks like your message did not send correctly.')
     if os.path.exists(f'archive/{df_name}'):
         if st.button(label='Existing chat history found. Click to display.'):
             df_toshow = pd.read_csv(f'archive/{df_name}',encoding='utf-8')

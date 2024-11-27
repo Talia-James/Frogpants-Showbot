@@ -13,6 +13,7 @@ showbot_channel,token = 'Frogpants','Nhrj6amcz4AqiSP6AVv5YhhQX8OhJ6wO'
 url = f'https://tms.showbot.tv/'
 with open('../frogbot_token.txt') as f:
     disc_token = f.readlines()[0]
+global detected
 detected = False
 
 intents = discord.Intents.all()
@@ -45,27 +46,35 @@ test_server_channel = 675451203907354626
 test_server_id = 675451203412295779
 
 
-async def time_check(general_channel_obj,test_channel_obj):
-    if datetime.now().weekday() not in [5,6]:
-        hour,minute = datetime.now().hour,datetime.now().minute
-        if minute<55:
-            delta = 55 - minute
-            await asyncio.sleep(delta*60)
-        else:
-            detected,livestream_link = detect_stream(frogpants_channel)
-            if detected and livestream_link is not None:
-                await general_channel_obj.send(f'Looks like Frogpants has gone live! Watch at: {livestream_link}')
-                await asyncio.sleep(int(60*60*2.5))
-                detected = False
-            elif not detected and livestream_link is None:
-                await test_channel_obj.send('Something weird happened, and the bot automatically detected that Frogpants is live but could not retrieve the link. It will try again in one minute.')
-                await asyncio.sleep(60)
+async def time_check(general_channel_obj,test_channel_obj,detected=False):
+    if not detected:
+        if datetime.now().weekday() not in [5,6]:
+            hour,minute = datetime.now().hour,datetime.now().minute
+            if minute<55 and minute>31:
+                delta = 55 - minute
+                await asyncio.sleep(delta*60)
+            elif minute<30:
+                delta = 30 - minute
+                await asyncio.sleep(delta*60)
             else:
-                if minute == 55:
-                    await asyncio.sleep(5*60)
+                detected,livestream_link = detect_stream(frogpants_channel)
+                if detected and livestream_link is not None:
+                    print('Stream detected.')
+                    await general_channel_obj.send(f'Looks like Frogpants has gone live! Watch at: {livestream_link}')
+                    await asyncio.sleep(int(60*60*2.5))
+                    detected = False
+                elif not detected and livestream_link is None:
+                    await test_channel_obj.send('Something weird happened, and the bot automatically detected that Frogpants is live but could not retrieve the link. It will try again in one minute.')
+                    await asyncio.sleep(60)
                 else:
-                    delta = 60-minute
-                    await asyncio.sleep(delta*60)
+                    print('No stream detected.')
+                    if minute == 55:
+                        await asyncio.sleep(5*60)
+                    else:
+                        delta = 60-minute
+                        await asyncio.sleep(delta*60)
+    else:
+        asyncio.sleep(3*60*60)
 
 @bot.event
 async def on_ready():
@@ -86,7 +95,7 @@ async def on_ready():
         print('No channel object found, no Discord message will be sent.')
     if general_channel_obj is not None:
         print('Launching and syncing live stream detection.')
-        await time_check(frogpants_guild_obj,general_channel_obj)
+        await time_check(general_channel_obj,test_channel_obj)
     else:
         print('No general channel object found, halting live stream detection.')
                     
@@ -94,6 +103,7 @@ async def on_ready():
 async def live(ctx):
     detected_from_command,livestream_link = detect_stream(frogpants_channel)
     if detected_from_command and livestream_link is not None:
+        await time_check(None,None,True)
         await ctx.send(f'Looks like Frogpants has gone live! Watch at: {livestream_link}')
     elif not detected_from_command and livestream_link is None:
         await ctx.send('Something weird happened, and the bot command detected that Frogpants is live but could not retrieve the link.')
