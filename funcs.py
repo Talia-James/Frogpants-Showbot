@@ -48,9 +48,9 @@ def build_submission_history(showbot_channel):
         authors.append(author)
         title = title.replace('&#039;',"'")
         titles.append(title)
-        # times.append('Scraped')
+        times.append('Scraped')
     print(f'Titles scraped for Showbot.tv channel: {showbot_channel} ')
-    return authors,titles
+    return authors,titles,times
 
 #Uses the driver object from build_headless() to detect a live stream. It uses two methods as a failsafe.
 def detect_stream(channel_url):
@@ -103,26 +103,31 @@ def build_credentials(client_secrets_file,scopes,testing=True):
     if testing:
         if os.path.exists("../token.json"): #Token stored in parent directory for security reasons
             credentials = Credentials.from_authorized_user_file("../token.json", scopes)
-            print('Credentials found.')
+            # print('Credentials found.')
+            status = 'Normal'
     else:
         if os.path.exists("../working_submit_token_Talia_do_not_delete.json"): #Token stored in parent directory for security reasons
             credentials = Credentials.from_authorized_user_file("../working_submit_token_Talia_do_not_delete.json", scopes)
-            print('Older token used.')
+            # print('Older token used.')
+            status = 'Fallback'
     try:
         if not credentials or not credentials.valid:
             if credentials and credentials.expired and credentials.refresh_token:
                 credentials.refresh(Request())
-                print('Credentials refreshed.')
+                # print('Credentials refreshed.')
+                status = 'Refreshed'
             else:
                 credentials = build_flow(client_secrets_file,scopes)
-                print('Credentials rebuilt.')
+                # print('Credentials rebuilt.')
+                status = 'Rebuilt'
             with open('../token.json','w') as token:
                 print('New credentials saved via default flow.')
                 token.write(credentials.to_json())
     except (UnboundLocalError,RefreshError):
         print('Credentials rebuilt via error.')
         credentials = build_flow(client_secrets_file,scopes,save=True)
-    return credentials
+        status = 'Error'
+    return credentials,status
 
 def build_flow(client_secrets_file,scopes,save=False):
     flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(client_secrets_file,scopes)
@@ -135,24 +140,28 @@ def build_flow(client_secrets_file,scopes,save=False):
 
 #Parses a supplied JSON object, likely from an API request, sorts them into author and message lists, and searches for chat messages beginning with the '!s' trigger.
 def title_search(chat_json):
-    authors,titles = [],[]
+    authors,titles,times = [],[],[]
     for message_list in chat_json['items']:
         message = message_list['snippet']['displayMessage']
         if message[:2]=='!s':
             author = message_list['authorDetails']['displayName']
+            title_time = message_list['snippet']['publishedAt']
             authors.append(author)
             titles.append(message[2:])
-    return authors,titles
+            times.append(title_time)
+    return authors,titles,times
 
 #Parses a supplied JSON object, likely from an API request, and sorts them into author and message lists. This function does not discriminate based on the '!s' trigger and is intended for debugging, testing, and future purposes.
 def parse_chat(chat_json):
-    authors,messages = [],[]
+    authors,messages,times = [],[],[]
     for message_list in chat_json['items']:
         author = message_list['authorDetails']['displayName']
         message = message_list['snippet']['displayMessage']
+        title_time = message_list['snippet']['publishedAt']
         authors.append(author)
         messages.append(message)
-    return authors,messages
+        times.append(title_time)
+    return authors,messages,times
 
 #Function to simplify the repeated process of building a YouTube API object. The returned object will be an instance of the 
 #API module being used (default is googleapiclient.discovery) on which you can then call various API methods such as .list() or .insert().
@@ -164,7 +173,9 @@ def build_yt_obj(credentials,api_service_name=api_service_name,api_version=api_v
 #YouTube API function to use a supplied livestreamid, either supplied directly or detected with functions above, to find the
 #activeLiveChatId string in the 'liveStreamingDetails' part of the API response. List calls should only consume 1 API credit.
 def find_chat_id(livestreamid,api_service_name=api_service_name,api_version=api_version,client_secrets_file=client_secrets_file,credentials=None,scopes=scopes,module = googleapiclient.discovery):
-    credentials = build_credentials(client_secrets_file,scopes)
+    credentials,status = build_credentials(client_secrets_file,scopes)
+    if status == 'Error':
+        print('There was an error building security credentials, and the OAuth2 flow needs to be manually reauthenticated. [find_chat_id function]')
     youtube = build_yt_obj(credentials,api_service_name, api_version,module=module)
     request = youtube.videos().list(
         id=livestreamid,
@@ -181,7 +192,9 @@ def find_chat_id(livestreamid,api_service_name=api_service_name,api_version=api_
 #Once find_chat_id() locates a LiveChatId string, that value is then used to poll the API again for all the chat messages with the supplied id.
 #The response is a standard API JSON object that is parsed with other functions.
 def read_chat(livechatid,api_service_name=api_service_name,api_version=api_version,client_secrets_file=client_secrets_file,credentials=None,module = googleapiclient.discovery):
-    credentials = build_credentials(client_secrets_file,scopes)
+    credentials,status = build_credentials(client_secrets_file,scopes)
+    if status == 'Error':
+        print('There was an error building security credentials, and the OAuth2 flow needs to be manually reauthenticated. [read_chat function call]')
     youtube = build_yt_obj(credentials,api_service_name, api_version,module=googleapiclient.discovery)
     request = youtube.liveChatMessages().list(
         liveChatId=livechatid,
@@ -220,6 +233,8 @@ def randomize_confirmation(author,disc_format=False):
         confirmation_message = confirmation_message + ' (you coward)'
     elif author=='StephanieinahpetS':
         confirmation_message = confirmation_message[::-1]
+    elif author=='Scott Johnson':
+        confirmation_message = f'{author} get back to work, podcast monkey.'
     if disc_format:
         confirmation_message = confirmation_message.replace(author,f'{author}')
     else:
@@ -229,7 +244,9 @@ def randomize_confirmation(author,disc_format=False):
 #Use a livechatid string with a supplied author string to send a confirmation message that the title has been submitted.
 #Insert calls should consume 50 API credits.
 def send_chat_message(livechatid,author,api_service_name=api_service_name,api_version=api_version,client_secrets_file=client_secrets_file,credentials=None,scopes=scopes,module = googleapiclient.discovery):
-    credentials = build_credentials(client_secrets_file,scopes)
+    credentials,status = build_credentials(client_secrets_file,scopes)
+    if status == 'Error':
+        print('There was an error building security credentials, and the OAuth2 flow needs to be manually reauthenticated. [send_chat_message function call]')
     youtube = build_yt_obj(credentials,api_service_name, api_version,module=module)
     confirmation_message = randomize_confirmation(author)
     request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
@@ -243,16 +260,3 @@ def send_chat_message(livechatid,author,api_service_name=api_service_name,api_ve
 
 #TODO: The credentials variable could possibly be saved and passed within the script and might not need to be rebuilt each time.
 #In general the OAuth2 flow could likely be streamlined a little bit.
-
-#Old function used for testing flow and other things. Keeping just in case.
-# def parse_messages(df):
-#     raw_message = df.Message.values.tolist()
-#     raw_authors = df.Author.values.tolist()
-#     token = 'SCOTT'
-#     for message in raw_message:
-#         if message[:2]=='!s':
-#             author = raw_authors[raw_message.index(message)]
-#             message = message[2:]
-#             print(f'{author}: {message}')
-#             author,message = html_ify(author),html_ify(message)
-#             print(f'http://www.showbot.tv/s/add.php?title=$({message})&user={author}&channel=Frogpants&key={token}')
