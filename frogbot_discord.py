@@ -38,11 +38,13 @@ test_channel_id = 1308868510037839884
 frogpants_general = 623339707715158016
 frogpants_tms = 146848379853471744
 frogpants_monday_show = 1207082163703648356
-# testbed_guild_id = 675451203907354626
-# testbed_general = 675451203412295779
+testbed_guild_id = 675451203412295779
+testbed_general_id = 675451203907354626
+
 
 os.environ['detected']='False'
 
+##DON'T FORGET TO AWAIT THE SLEEP FUNCTIONS
 async def time_check(channel_obj):
     while True:
         detected = os.environ['detected']
@@ -57,48 +59,17 @@ async def time_check(channel_obj):
                 print('No stream detected.')
                 print('Sleeping search for 15 minutes.')
                 await asyncio.sleep(15*60)
-            # if datetime.now().weekday() not in [5,6]:
-            #     hour,minute = datetime.now().hour,datetime.now().minute
-            #     if minute<55 and minute>=31:
-            #         delta = 55 - minute
-            #         print(f'Search sleeping for {delta} minutes.')
-            #         await asyncio.sleep(delta*60)
-            #     elif minute<30:
-            #         delta = 30 - minute
-            #         print(f'Search sleeping for {delta} minutes.')
-            #         await asyncio.sleep(delta*60)
-            #     else:
-            #         detected,livestream_link = detect_stream(frogpants_channel)
-            #         if detected and livestream_link is not None:
-            #             print('Stream detected.')
-            #             await general_channel_obj.send(f'Looks like Frogpants has gone live! Watch at: {livestream_link}')
-            #             print(f'Search sleeping for 2.5 hours.')
-            #             os.environ['detected'] = 'True'
-            #             await asyncio.sleep(int(60*60*2.5))
-            #             os.environ['detected'] = 'False'
-            #         elif not detected and livestream_link is None:
-            #             await test_channel_obj.send('Something weird happened, and the bot automatically detected that Frogpants is live but could not retrieve the link. It will try again in one minute.')
-            #             print(f'Search sleeping for 60 seconds.')
-            #             await asyncio.sleep(60)
-            #         else:
-            #             print('No stream detected.')
-            #             if minute == 55:
-            #                 duration = 5*60
-            #             else:
-            #                 delta = 60-minute
-            #                 duration = delta*60
-            #             print(f'Search sleeping for {delta} minutes.')
-            #             await asyncio.sleep(duration)
         else:
             print('Sleeping search for 3 hours.')
-            asyncio.sleep(3*60*60)
-            os.environ['detected'] = 'False'
+            await asyncio.sleep(3*60*60)
+            os.environ['detected']='False'
+
 
 @bot.event
 async def on_ready():
     print("Let's roll, buttholes!")
-    frogpants_guild_obj,general_channel_obj = get_channel(frogpants_guild_id,frogpants_general)
-    _,test_channel_obj = get_channel(frogpants_guild_id,test_channel_id)
+    frogpants_guild_obj,general_channel_obj = get_channel(testbed_guild_id,testbed_general_id)
+    frogpants_guild_obj,test_channel_obj = get_channel(testbed_guild_id,test_channel_id)
     if frogpants_guild_obj is not None:
         print(f'Guild object found: {frogpants_guild_obj}')
     else:
@@ -124,7 +95,7 @@ async def live(ctx):
         _,livestream_link = detect_stream(frogpants_channel)
         await ctx.send(f'Looks like Frogpants has gone live! Watch at: {livestream_link}')
     else:
-        ctx.send("I don't seem to be able to find a live stream for Frogpants.")
+        await ctx.send("I don't seem to be able to find a live stream for Frogpants.")
 
 @bot.command()
 async def s(ctx):

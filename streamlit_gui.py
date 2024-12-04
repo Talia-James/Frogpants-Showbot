@@ -29,19 +29,41 @@ patreon_links = {
     'Talia':'https://www.patreon.com/TaliaJames'
 }
 
+st.fragment(run_every=5)
+def show_hist(df_name):
+    df_toshow = pd.read_csv(f'archive/{df_name}',encoding='utf-8')
+    author_col,entry_col,source_col = st.columns(3)
+    with author_col:
+        st.write('**Author**')
+    with entry_col:
+        st.write('**Title**')
+    with source_col:  
+        st.write('**Submitted From**')  
+    for i in range(len(df_toshow)):
+        author_col,entry_col,source_col = st.columns(3)
+        entry = df_toshow.loc[i]
+        author,title,source = entry.author,entry.title,entry.source
+        with author_col:
+            st.write(author)
+        with entry_col:
+            st.write(title)
+        with source_col:
+            st.write(source)
+        
+
 def main():
     streamid = False
     ctx = get_script_run_ctx(suppress_warning=True)
-    st.title('Find the stream ID')
-    st.write('''
-             The API needs a livechatid to be able to poll for messages and send confirmations, and to find that it needs a streamid.
-             Conveniently, the streamid is the same value as videoid for API purposes, and this is easily found in the link to the stream/video.
-             https://www.youtube.com/watch?v=[STREAM_ID_HERE]
-             ''')
-    with shelve.open('params') as f:
-        if 'streamid' in f:
-            streamid = f['streamid']
-    with st.expander(label='Auto-detect tool'):
+    with st.expander(label='StreamID',expanded=True):
+        st.title('Find the stream ID')
+        st.write('''
+                The API needs a livechatid to be able to poll for messages and send confirmations, and to find that it needs a streamid.
+                Conveniently, the streamid is the same value as videoid for API purposes, and this is easily found in the link to the stream/video.
+                https://www.youtube.com/watch?v=[STREAM_ID_HERE]
+                ''')
+        with shelve.open('params') as f:
+            if 'streamid' in f:
+                streamid = f['streamid']
         st.subheader('Find streamid via channel')
         st.write("You can use my auto-detect tool to find it via your channel name instead (youtube.com/[CHANNEL_ID], defaults to yours which is @ScottJohnson). This is even easier, but it can take a few seconds longer and uses more resources. This will overwrite your previous streamid value.")
         channel = st.text_input(label='Stream ID',value='@ScottJohnson',key='chan_input')
@@ -55,50 +77,52 @@ def main():
                     st.session_state['streamid']=streamid
             else:
                 st.write('No live stream found.')
-    if not streamid:
-        streamid_man = None
-        streamid = st.text_input(label='Stream ID')
-        if st.button('Save streamid'):
-            with shelve.open('params') as f:
-                f['streamid'] = streamid
-    else:
-        if streamid:
-            st.write('Saved streamid found.')
-        elif 'streamid' in st.session_state:
-            streamid = st.session_state['streamid']
-            st.write('Cached streamid found.')
-        streamid_man = st.text_input(label='Stream ID',value=streamid)
-        if st.button(label='Save streamid',key='man_col_save'):
-            with shelve.open('params') as f:
-                    f['streamid'] = streamid_man
-    st.title('Find chat ID')
-    st.write('''
-        Now with the stream ID, we can find the livechatid.
-            ''')
-    st.write('Click this once you have a streamid input. This interface can be janky, so once you set a variable it can help to click outside the box.')
-    with shelve.open('params') as f:
-        livechatid = f['livechatid']
-    if livechatid:
-            if 'livechatid' not in st.session_state:
-                st.session_state['livechatid'] = livechatid
-    if st.button('Find chat ID'):
-        try:
-            livechatid = find_chat_id(streamid)
-            if livechatid is not None:
-                st.write(f'Success!')
-                st.write(f'livechatid: {livechatid}')
-                st.session_state['livechatid'] = livechatid
+        st.write('Save time and bypass auto-detect to put the streamid in directly.')
+        if not streamid:
+            streamid_man = None
+            streamid = st.text_input(label='Stream ID')
+            if st.button('Save streamid'):
                 with shelve.open('params') as f:
-                    f['livechatid'] = livechatid
-        except KeyError:
-            print('No activeLiveChatId value found. The video link works, but the livestream has likely ended and thus has no active chat.')
-            st.write('No activeLiveChatId value found. The video link works, but the livestream has likely ended and thus has no active chat.')      
-    else:
-        st.write(f'No stream detected at https://www.youtube.com/watch?v={streamid} (or the script was interacted with and re-ran without setting this value)')
-    livechatid = st.text_input(label='Manual livechatid entry',value=livechatid)
-    if st.button(label='Save livechatid'):
+                    f['streamid'] = streamid
+        else:
+            if streamid:
+                st.write('Saved streamid found.')
+            elif 'streamid' in st.session_state:
+                streamid = st.session_state['streamid']
+                st.write('Cached streamid found.')
+            streamid_man = st.text_input(label='Stream ID',value=streamid)
+            if st.button(label='Save streamid',key='man_col_save'):
+                with shelve.open('params') as f:
+                        f['streamid'] = streamid_man
+    with st.expander(label='Chat ID',expanded=True):
+        st.title('Find chat ID')
+        st.write('''
+            Now with the stream ID, we can find the livechatid.
+                ''')
+        st.write('Click this once you have a streamid input. This interface can be janky, so once you set a variable it can help to click outside the box.')
         with shelve.open('params') as f:
-            f['livechatid'] = livechatid
+            livechatid = f['livechatid']
+        if livechatid:
+                if 'livechatid' not in st.session_state:
+                    st.session_state['livechatid'] = livechatid
+        if st.button('Find chat ID'):
+            try:
+                livechatid = find_chat_id(streamid)
+                if livechatid is not None:
+                    st.write(f'Success!')
+                    st.write(f'livechatid: {livechatid}')
+                    st.session_state['livechatid'] = livechatid
+                    with shelve.open('params') as f:
+                        f['livechatid'] = livechatid
+            except KeyError:
+                print('No activeLiveChatId value found. The video link works, but the livestream has likely ended and thus has no active chat.')
+                st.write('No activeLiveChatId value found. The video link works, but the livestream has likely ended and thus has no active chat.')      
+        else:
+            st.write(f'No stream detected at https://www.youtube.com/watch?v={streamid} (or the script was interacted with and re-ran without setting this value)')
+        livechatid = st.text_input(label='Manual livechatid entry',value=livechatid)
+        if st.button(label='Save livechatid'):
+            with shelve.open('params') as f:
+                f['livechatid'] = livechatid
     st.title('Spin up the bot')
     show = st.selectbox(label='Show',options=['TMS','The Monday Show'],index=0)
     if bool(os.environ['pid']) == False:
@@ -146,7 +170,9 @@ def main():
         st.write('Functions to send promotional messages in the chat, normally at the end of the show.') #Experimental until I confirm YouTube doesn't block a bunch of links
         if 'livechatid' in st.session_state:
             if st.button(label="Send Showbot link",key='showbot-vote-button'):
-                credentials = build_credentials(client_secrets_file,scopes)
+                credentials,status = build_credentials(client_secrets_file,scopes)
+                if status == 'Error':
+                    print('There was an error building security credentials, and the OAuth2 flow needs to be manually reauthenticated. [Send showbot link button call]')
                 youtube = build_yt_obj(credentials,api_service_name, api_version,module=googleapiclient.discovery)
                 request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
                 "type": "textMessageEvent",
@@ -161,43 +187,42 @@ def main():
                 except KeyError:
                     print(response)
                     st.write(f'Something went wrong, and it looks like your message did not send correctly.')
-            # if st.button(label="Send relevant Patreon links.",key='patreon-button'):
-            #     message_raw = ['TMS is a collaborative effort! ']
-            #     i = 0
-            #     for patreon in patreon_links:
-            #         i += 1
-            #         link = patreon_links[patreon]
-            #         if patreon == 'TMS':
-            #             message = f'Support TMS directly at {link}, '
-            #         elif patreon == 'Frogpants':
-            #             message = f'or support the whole network at: {link}. Support individuals: '
-            #         elif i == len(patreon_links):
-            #             message = f' and {patreon} at {link}.'
-            #         else:
-            #             message = f' {patreon} at {link},'
-            #         message_raw.append(message)
-            #     message_send = ''.join(message_raw)
-            #     credentials = build_credentials(client_secrets_file,scopes)
-            #     youtube = build_yt_obj(credentials,api_service_name, api_version,module=googleapiclient.discovery)
-            #     request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
-            #     "type": "textMessageEvent",
-            #     "textMessageDetails": {
-            #         "messageText": message_send}}})
-            #     response = request.execute()
-            #     try:
-            #         sent_message = response['snippet']['displayMessage']
-            #         print(f'Sent: {sent_message}')
-            #         st.write(f'Your message was successfully sent!')
-            #     except KeyError:
-            #         st.write(f'Something went wrong, and it looks like your message did not send correctly.')
+            if st.button(label="Send relevant Patreon links.",key='patreon-button'):
+                message_send = 'Support everyone on Patreon! Support TMS on the "tms" page or the Frogpants network in general on the "frogpants" page. You can find Brian under "coverville", Biocow under "biocow", and Talia under "TaliaJames".'
+                #Actual links disabled until allowed from bots by Scott on his page settings, I think
+                # message_raw = ['TMS is a collaborative effort! ']
+                # i = 0
+                # for patreon in patreon_links:
+                #     i += 1
+                #     link = patreon_links[patreon]
+                #     if patreon == 'TMS':
+                #         message = f'Support TMS directly at {link}, '
+                #     elif patreon == 'Frogpants':
+                #         message = f'or support the whole network at: {link}. Support individuals: '
+                #     elif i == len(patreon_links):
+                #         message = f' and {patreon} at {link}.'
+                #     else:
+                #         message = f' {patreon} at {link},'
+                #     message_raw.append(message)
+                # message_send = ''.join(message_raw)
+                credentials,status = build_credentials(client_secrets_file,scopes)
+                if status == 'Error':
+                    print('There was an error building security credentials, and the OAuth2 flow needs to be manually reauthenticated. [Patreon link button call]')
+                youtube = build_yt_obj(credentials,api_service_name, api_version,module=googleapiclient.discovery)
+                request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
+                "type": "textMessageEvent",
+                "textMessageDetails": {
+                    "messageText": message_send}}})
+                response = request.execute()
+                try:
+                    sent_message = response['snippet']['displayMessage']
+                    print(f'Sent: {sent_message}')
+                    st.write(f'Your message was successfully sent!')
+                except KeyError:
+                    st.write(f'Something went wrong, and it looks like your message did not send correctly.')
     if os.path.exists(f'archive/{df_name}'):
-        if st.button(label='Existing chat history found. Click to display.'):
-            df_toshow = pd.read_csv(f'archive/{df_name}',encoding='utf-8')
-            # st.dataframe(df_toshow)
-            for i in range(len(df_toshow)):
-                entry = df_toshow.loc[i]
-                author,title,source = entry.author,entry.title,entry.source
-                st.write(f'{author}: {title} ({source})')
+        st.subheader("Looks like the bot has already been active today. Here's what's already been submitted:")
+        show_hist(df_name)
 
 
 if __name__ == '__main__':

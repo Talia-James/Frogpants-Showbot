@@ -24,18 +24,19 @@ if os.path.exists(f'archive/{df_name}'):
     df = pd.read_csv(f'archive/{df_name}',encoding='utf-8')
     print('Existing df loaded')
     author_index_showbot,submitted_titles_showbot,times = build_submission_history(showbot_channel)
-    new_showbot_titles,new_showbot_authors = [],[]
-    for title,author in zip(submitted_titles_showbot,author_index_showbot):
+    new_showbot_titles,new_showbot_authors,new_showbot_times = [],[],[]
+    for title,author,title_time in zip(submitted_titles_showbot,author_index_showbot,times):
         if title not in df[df.source == 'showbot'].title.tolist():
             if title[-1]=='.':
                 title = title[:-1]
             new_showbot_authors.append(author)
             new_showbot_titles.append(title)
+            new_showbot_times.append(title_time)
     new_df_dict = {
         'author':new_showbot_authors,
         'title':new_showbot_titles,
         'source':['showbot']*len(new_showbot_titles),
-        'time':['showbot']*len(new_showbot_titles)
+        'time':new_showbot_times
                     }
     df_to_merge = pd.DataFrame.from_dict(new_df_dict)
     df = pd.merge(df,df_to_merge,how='outer')
@@ -45,13 +46,14 @@ else:
     #Scan the associated Showbot page to build a history of submissions, to prevent duplicate submissions
     #This should only run on a fresh bot boot for the day. It then goes to scrape the existing titles on showbot.
     author_index,submitted_titles,times = build_submission_history(showbot_channel)
-    df = pd.DataFrame(columns=['author','title','source'])
+    df = pd.DataFrame(columns=['author','title','source','time'])
+    times = []
     for title in submitted_titles:
         if title[-1]=='.':
             i = submitted_titles.index(title)
             submitted_titles[i]=submitted_titles[i][:-1]
             times.append(datetime.now())
-    df.author,df.title,df.source = author_index,submitted_titles,'showbot'
+    df.author,df.title,df.source,df.time = author_index,submitted_titles,'showbot',times
     df.to_csv(f'archive/{df_name}',encoding='utf-8',index=False)
 
 
@@ -67,7 +69,9 @@ else:
 
 try:
     if 'quiet' not in sys.argv:
-        credentials = build_credentials(client_secrets_file,scopes) #Builds OAuth2 credentials object. Uses existing files or makes new one if not detected. This links the function to the account that follows the URI.
+        credentials,status = build_credentials(client_secrets_file,scopes) #Builds OAuth2 credentials object. Uses existing files or makes new one if not detected. This links the function to the account that follows the URI.
+        if status == 'Error':
+            print('There was an error building security credentials, and the OAuth2 flow needs to be manually reauthenticated. [Bot online announcement call]')
         youtube = build_yt_obj(credentials) #Common step in calling the API. Always have to build an object on which to call methods.
         request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
                 "type": "textMessageEvent",
@@ -79,17 +83,18 @@ try:
     while True:
         authors,titles,times = title_search(read_chat(livechatid)) #Poll API for all chat messages, regardless of they've been polled already or not. title_search() already filters for '!s' chat trigger and cleans as needed
         #Check extracted titles versus previously submitted ones, submit if new
-        for author,title in zip(authors,titles):
+        for author,title,title_time in zip(authors,titles,times):
             if title not in submitted_titles: #Check extracted titles versus previously submitted ones, submit if new
                 author_index.append(author)
                 submitted_titles.append(title)
+                times.append(title_time)
                 print(f'{author}: {title}') #Add new title to list and add author to another list to maintain the order. Print for debugging and monitoring purposes.
                 # st.write(f'{author}: {title}')
                 author_html,title_html = html_ify(author),html_ify(title) #Prepare link for submission then submit via Requests module
                 submission_link = f'http://www.showbot.tv/s/add.php?title={title_html}&user={author_html}&channel={showbot_channel}&key={token}'
                 try:
                     requests.get(submission_link)
-                    title_merge_df = pd.DataFrame(columns=['author','title','source'])
+                    title_merge_df = pd.DataFrame(columns=['author','title','source','time'])
                     title_merge_df['author'] = [author]
                     title_merge_df['title'] = [title]
                     title_merge_df['source'] = ['YouTube']
@@ -98,13 +103,12 @@ try:
                     df.to_csv(f'archive/{df_name}',encoding='utf-8',index=False)
                 except TimeoutError:
                     print(f'Timeout error while sending to showbot [{author} : {title}]')
-                    # st.write(f'Timeout error while sending to showbot [{author} : {title}]')
                     pass
                 #At this point the title has been submitted. This is one complete function and API call. Confirmation via the .insert() method to send a message is a separate 
                 #function incurring higher quota useage.
                 # try:
                 response = send_chat_message(livechatid,author) #The API response in JSON format. Not technically needed but saved in case.
-                print(response)
+                # print(response)
                 print(f'Title successfully submitted and confirmed: {author}.') #Generic success message only for the console for debugging and monitoring purposes.
                 # except HttpError: #For some reason the script can get a 403 response code error when attempting to submit a confirmation response. This block keeps the script from halting if that occurs.
                 #     print(f'HTTP Error: [{author}: {title}] submitted but failed to confirm. Likely a 403 error.')
