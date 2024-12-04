@@ -167,6 +167,7 @@ def parse_chat(chat_json):
 #API module being used (default is googleapiclient.discovery) on which you can then call various API methods such as .list() or .insert().
 #Some functions could in theory be done with only an API key and not require an OAuth2 credential, but accomodating those cases is out of scope currently.
 def build_yt_obj(credentials,api_service_name=api_service_name,api_version=api_version,module=googleapiclient.discovery):
+    credentials,status = build_credentials(client_secrets_file,scopes,testing=True)
     youtube = module.build(api_service_name, api_version, credentials=credentials)
     return youtube
 

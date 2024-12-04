@@ -23,7 +23,7 @@ df_name = f'{show}-{datetime.today().year}-{datetime.today().month}-{datetime.to
 if os.path.exists(f'archive/{df_name}'):
     df = pd.read_csv(f'archive/{df_name}',encoding='utf-8')
     print('Existing df loaded')
-    author_index_showbot,submitted_titles_showbot = build_submission_history(showbot_channel)
+    author_index_showbot,submitted_titles_showbot,times = build_submission_history(showbot_channel)
     new_showbot_titles,new_showbot_authors = [],[]
     for title,author in zip(submitted_titles_showbot,author_index_showbot):
         if title not in df[df.source == 'showbot'].title.tolist():
@@ -34,7 +34,8 @@ if os.path.exists(f'archive/{df_name}'):
     new_df_dict = {
         'author':new_showbot_authors,
         'title':new_showbot_titles,
-        'source':['showbot']*len(new_showbot_titles)
+        'source':['showbot']*len(new_showbot_titles),
+        'time':['showbot']*len(new_showbot_titles)
                     }
     df_to_merge = pd.DataFrame.from_dict(new_df_dict)
     df = pd.merge(df,df_to_merge,how='outer')
@@ -43,9 +44,8 @@ if os.path.exists(f'archive/{df_name}'):
 else:
     #Scan the associated Showbot page to build a history of submissions, to prevent duplicate submissions
     #This should only run on a fresh bot boot for the day. It then goes to scrape the existing titles on showbot.
-    author_index,submitted_titles = build_submission_history(showbot_channel)
+    author_index,submitted_titles,times = build_submission_history(showbot_channel)
     df = pd.DataFrame(columns=['author','title','source'])
-    times = []
     for title in submitted_titles:
         if title[-1]=='.':
             i = submitted_titles.index(title)
@@ -77,7 +77,7 @@ try:
         response = request.execute()
     print('Loop Init')
     while True:
-        authors,titles = title_search(read_chat(livechatid)) #Poll API for all chat messages, regardless of they've been polled already or not. title_search() already filters for '!s' chat trigger and cleans as needed
+        authors,titles,times = title_search(read_chat(livechatid)) #Poll API for all chat messages, regardless of they've been polled already or not. title_search() already filters for '!s' chat trigger and cleans as needed
         #Check extracted titles versus previously submitted ones, submit if new
         for author,title in zip(authors,titles):
             if title not in submitted_titles: #Check extracted titles versus previously submitted ones, submit if new
@@ -93,8 +93,8 @@ try:
                     title_merge_df['author'] = [author]
                     title_merge_df['title'] = [title]
                     title_merge_df['source'] = ['YouTube']
-                    # title_merge_df['time'] = [datetime.now()]
-                    df = pd.merge(df,title_merge_df,how='outer')
+                    title_merge_df['time'] = [datetime.now()]
+                    df = pd.concat([df,title_merge_df])
                     df.to_csv(f'archive/{df_name}',encoding='utf-8',index=False)
                 except TimeoutError:
                     print(f'Timeout error while sending to showbot [{author} : {title}]')
