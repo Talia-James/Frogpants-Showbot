@@ -47,12 +47,12 @@ else:
     #This should only run on a fresh bot boot for the day. It then goes to scrape the existing titles on showbot.
     author_index,submitted_titles,times = build_submission_history(showbot_channel)
     df = pd.DataFrame(columns=['author','title','source','time'])
-    times = []
+    # times = []
     for title in submitted_titles:
         if title[-1]=='.':
             i = submitted_titles.index(title)
             submitted_titles[i]=submitted_titles[i][:-1]
-            times.append(datetime.now())
+            # times.append(datetime.now())
     df.author,df.title,df.source,df.time = author_index,submitted_titles,'showbot',times
     df.to_csv(f'archive/{df_name}',encoding='utf-8',index=False)
 
