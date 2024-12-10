@@ -41,6 +41,7 @@ if os.path.exists(f'archive/{df_name}'):
     df_to_merge = pd.DataFrame.from_dict(new_df_dict)
     df = pd.merge(df,df_to_merge,how='outer')
     author_index,submitted_titles = df.author.values.tolist(),df.title.values.tolist()
+    df.sort_values('time',ascending=True,inplace=True)  
     df.to_csv(f'archive/{df_name}',encoding='utf-8',index=False)
 else:
     #Scan the associated Showbot page to build a history of submissions, to prevent duplicate submissions
@@ -54,6 +55,7 @@ else:
             submitted_titles[i]=submitted_titles[i][:-1]
             times.append(datetime.now())
     df.author,df.title,df.source,df.time = author_index,submitted_titles,'showbot',times
+    df.sort_values('time',ascending=True,inplace=True)  
     df.to_csv(f'archive/{df_name}',encoding='utf-8',index=False)
 
 
@@ -100,6 +102,7 @@ try:
                     title_merge_df['source'] = ['YouTube']
                     title_merge_df['time'] = [datetime.now()]
                     df = pd.concat([df,title_merge_df])
+                    df.sort_values('time',ascending=True,inplace=True)  
                     df.to_csv(f'archive/{df_name}',encoding='utf-8',index=False)
                 except TimeoutError:
                     print(f'Timeout error while sending to showbot [{author} : {title}]')

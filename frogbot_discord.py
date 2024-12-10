@@ -68,25 +68,25 @@ async def time_check(channel_obj):
 @bot.event
 async def on_ready():
     print("Let's roll, buttholes!")
-    frogpants_guild_obj,general_channel_obj = get_channel(testbed_guild_id,testbed_general_id)
-    frogpants_guild_obj,test_channel_obj = get_channel(testbed_guild_id,test_channel_id)
-    if frogpants_guild_obj is not None:
-        print(f'Guild object found: {frogpants_guild_obj}')
-    else:
-        print('No guild object found.')
-    if test_channel_obj is not None:
-        print(f'Channel object found: {test_channel_obj}')
-        if 'quiet' not in sys.argv:
-            await test_channel_obj.send("Let's roll, buttholes!")
-        else:
-            print(f'Test channel object found: {test_channel_obj}, but quiet mode is active; ergo no message will be sent.')
-    else:
-        print('No channel object found, no Discord message will be sent.')
-    if general_channel_obj is not None:
-        print('Launching and syncing live stream detection.')
-        await time_check(general_channel_obj)
-    else:
-        print('No general channel object found, halting live stream detection.')
+    # frogpants_guild_obj,general_channel_obj = get_channel(testbed_guild_id,testbed_general_id)
+    # frogpants_guild_obj,test_channel_obj = get_channel(testbed_guild_id,test_channel_id)
+    # if frogpants_guild_obj is not None:
+    #     print(f'Guild object found: {frogpants_guild_obj}')
+    # else:
+    #     print('No guild object found.')
+    # if test_channel_obj is not None:
+    #     print(f'Channel object found: {test_channel_obj}')
+    #     if 'quiet' not in sys.argv:
+    #         await test_channel_obj.send("Let's roll, buttholes!")
+    #     else:
+    #         print(f'Test channel object found: {test_channel_obj}, but quiet mode is active; ergo no message will be sent.')
+    # else:
+    #     print('No channel object found, no Discord message will be sent.')
+    # if general_channel_obj is not None:
+    #     print('Launching and syncing live stream detection.')
+    #     await time_check(general_channel_obj)
+    # else:
+    #     print('No general channel object found, halting live stream detection.')
                     
 @bot.command()
 async def live(ctx):
@@ -145,4 +145,11 @@ async def bacon(ctx):
     gif_fp = os.path.join(os.getcwd(),'bacon_gifs',rando_gif)
     await ctx.send(file=discord.File(gif_fp))
 
+@bot.command()
+async def kill(ctx):
+    if ('Mod' in [str(i) for i in ctx.author.roles]) or (str(ctx.author) == 'talizorel'):
+        await ctx.send('Ouch, right in the butthole.')
+        exit()
+
 bot.run(disc_token)
+
