@@ -68,8 +68,8 @@ async def time_check(channel_obj):
 @bot.event
 async def on_ready():
     print("Let's roll, buttholes!")
-    frogpants_guild_obj,general_channel_obj = get_channel(testbed_guild_id,testbed_general_id)
-    frogpants_guild_obj,test_channel_obj = get_channel(testbed_guild_id,test_channel_id)
+    frogpants_guild_obj,general_channel_obj = get_channel(frogpants_guild_id,frogpants_general)
+    frogpants_guild_obj,test_channel_obj = get_channel(frogpants_guild_id,test_channel_id)
     if frogpants_guild_obj is not None:
         print(f'Guild object found: {frogpants_guild_obj}')
     else:
