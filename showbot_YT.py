@@ -34,7 +34,7 @@ else:
 livechatid = find_chat_id(streamid)
 
 #Scan the associated Showbot page to build a history of submissions, to prevent duplicate submissions
-author_index,submitted_titles = build_submission_history(showbot_channel)
+author_index,submitted_titles,times = build_submission_history(showbot_channel)
 
 if 'quiet' in sys.argv:
     quiet = True
@@ -58,7 +58,9 @@ try:
         authors,titles = title_search(read_chat(livechatid)) #Poll API for all chat messages, regardless of they've been polled already or not. title_search() already filters for '!s' chat trigger and cleans as needed
         #Check extracted titles versus previously submitted ones, submit if new
         for author,title in zip(authors,titles):
-            if title not in submitted_titles: #Check extracted titles versus previously submitted ones, submit if new
+            if (title not in submitted_titles) or (title.strip() not in submitted_titles): #Check extracted titles versus previously submitted ones, submit if new
+                title = title.strip()
+                # title[0]=title[0].upper() Would like to autocapitalize the first letter but would make bot fail truth check and loop
                 author_index.append(author)
                 submitted_titles.append(title)
                 print(f'{author}: {title}') #Add new title to list and add author to another list to maintain the order. Print for debugging and monitoring purposes.
