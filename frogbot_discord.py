@@ -43,6 +43,7 @@ testbed_general_id = 675451203907354626
 
 
 os.environ['detected']='False'
+os.environ['last_link'] = 'None'
 
 ##DON'T FORGET TO AWAIT THE SLEEP FUNCTIONS
 async def time_check(channel_obj):
@@ -53,15 +54,15 @@ async def time_check(channel_obj):
             detected,livestream_link = detect_stream(frogpants_channel)
             if detected and livestream_link is not None:
                 print('Stream detected.')
-                await channel_obj.send(f'Looks like Frogpants has gone live! Watch at: {livestream_link}')
+                await channel_obj.send(f'Looks like Frogpants has gone live! Watch at: {livestream_link}',delete_after = one_hour)
                 os.environ['detected'] = 'True'
             else:
                 print('No stream detected.')
                 print('Sleeping search for 15 minutes.')
-                await asyncio.sleep(15*60)
+                await asyncio.sleep(15*one_minute)
         else:
             print('Sleeping search for 3 hours.')
-            await asyncio.sleep(3*60*60)
+            await asyncio.sleep(3*one_hour)
             os.environ['detected']='False'
 
 
@@ -77,7 +78,7 @@ async def on_ready():
     if test_channel_obj is not None:
         print(f'Channel object found: {test_channel_obj}')
         if 'quiet' not in sys.argv:
-            await test_channel_obj.send("Let's roll, buttholes!")
+            await test_channel_obj.send("Let's roll, buttholes!",delete_after = one_minute)
         else:
             print(f'Test channel object found: {test_channel_obj}, but quiet mode is active; ergo no message will be sent.')
     else:
@@ -87,15 +88,17 @@ async def on_ready():
         await time_check(general_channel_obj)
     else:
         print('No general channel object found, halting live stream detection.')
-                    
+one_hour = 3600
+one_minute = 60
+
 @bot.command()
 async def live(ctx):
     detected = os.environ['detected']
     if detected == 'True':
         _,livestream_link = detect_stream(frogpants_channel)
-        await ctx.send(f'Looks like Frogpants has gone live! Watch at: {livestream_link}')
+        await ctx.send(f'Looks like Frogpants has gone live! Watch at: {livestream_link}',delete_after=one_hour)
     else:
-        await ctx.send("I don't seem to be able to find a live stream for Frogpants.")
+        await ctx.send("I don't seem to be able to find a live stream for Frogpants.",delete_after = one_minute)
 
 @bot.command()
 async def s(ctx):
@@ -125,7 +128,7 @@ async def guild_info(ctx):
 
 @bot.command()
 async def showbot(ctx):
-    await ctx.send(f"Don't forget to vote for titles! {url}")
+    await ctx.send(f"Don't forget to vote for titles! {url}",delete_after = one_minute*5)
 
 @bot.command()
 async def wc(ctx):
@@ -143,6 +146,13 @@ async def wc(ctx):
 async def bacon(ctx):
     rando_gif = choice(bacon_gifs)
     gif_fp = os.path.join(os.getcwd(),'bacon_gifs',rando_gif)
-    await ctx.send(file=discord.File(gif_fp))
+    await ctx.send(file=discord.File(gif_fp),delete_after = one_minute*5)
+
+@bot.command()
+async def kill(ctx):
+    if ('Mod' in [str(i) for i in ctx.author.roles]) or (str(ctx.author) == 'talizorel') or (str(ctx.author) == 'frogpants'):
+        await ctx.send('Ouch, right in the butthole.',delete_after = one_minute)
+        exit()
 
 bot.run(disc_token)
+

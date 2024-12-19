@@ -1,0 +1,15 @@
+Existing bot commands:
+
+!live - Initiates a manual, out-of-cycle check for a live show. If it finds a live show, it will send a "Gone Live" message to the invoking channel.
+
+!s - The basic title submission command. Uses the same backend as the YouTube bot and ultimately ends up at the same destination on tms.showbot.tv. Discord does not have built-in quota limits, however, so even if the YouTube bot is down or at its quota limit for the day, this is an alternative.
+
+!guild_info - Effectively useless for anyone but me. It prints basic information about the Server (called guilds in the API) to my console ergo only I can see it. I mostly keep this in as a backup or a way for testing bot activity without triggering downstream effects.
+
+!showbot - Simply sends the message: "Don't forget to vote for titles! https://tms.showbot.tv/"
+
+!wc - Triggers the bot to make a word cloud of the TMS show titles for the given day. On the backend, this uses a .csv file that's automatically compiled when the bot runs and submits titles. When the bot boots up, it also automatically scrapes titles submitted directly to showbot, so it should include those. So far, this only works with TMS titles (so not the Monday Show). The bot will send the word cloud image to the channel in which it is invoked, so wherever you type "!wc" will have the image sent. This isn't YouTube, so feel free to make these as much as you want. The only caveat is that I haven't tested the function when there's no titles for the day, so if there's no .csv file of titles for the given day it may throw an error (which you likely won't see, it would just do nothing, the error message goes to my console).
+
+!bacon - This is an Easter egg mostly for Zoe. I have a folder of random (B/b)acon gifs, both of the food and Kevin variety. When this command is invoked, it will simply pull a random .gif and send it to the invoking channel.
+
+!kill - Engage the kill switch. This shuts down the bot until I manually reactivate it again. Only I or a mod can use this command; if someone else tries to use it, the bot will simply do nothing. You'll know it works for sure if the bot is no longer online in the list of users on the right of the server display. Just to be extra sure, the bot should also say, "Ouch, right in the butthole." before self-terminating.
