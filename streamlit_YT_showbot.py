@@ -102,7 +102,12 @@ try:
                     title_merge_df['source'] = ['YouTube']
                     title_merge_df['time'] = [datetime.now()]
                     df = pd.concat([df,title_merge_df])
-                    # df.sort_values('time',ascending=True,inplace=True)  
+                    try:
+                        df.sort_values('time',ascending=True,inplace=True)
+                    except TypeError:
+                        print('Showbot times reset to now.')
+                        df.time = df.time.apply(lambda x: datetime.now() if type(x)==str else x)
+                        df.sort_values('time',ascending=True,inplace=True)
                     df.to_csv(f'archive/{df_name}',encoding='utf-8',index=False)
                 except TimeoutError:
                     print(f'Timeout error while sending to showbot [{author} : {title}]')
