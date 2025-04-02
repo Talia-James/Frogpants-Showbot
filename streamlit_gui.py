@@ -66,7 +66,7 @@ def main():
                 streamid = f['streamid']
         st.subheader('Find streamid via channel')
         st.write("You can use my auto-detect tool to find it via your channel name instead (youtube.com/[CHANNEL_ID], defaults to yours which is @ScottJohnson). This is even easier, but it can take a few seconds longer and uses more resources. This will overwrite your previous streamid value.")
-        channel = st.text_input(label='Stream ID',value='@ScottJohnson',key='chan_input')
+        channel = st.text_input(label='Stream ID',value='@macaddict89',key='chan_input')
         if st.button(label='Auto-detect'):
             streamid = find_stream_id(channel)
             if streamid:

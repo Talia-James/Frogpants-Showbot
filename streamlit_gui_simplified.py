@@ -22,7 +22,7 @@ def main():
              This GUI interface reloads with every interaction, so copy the information down before moving on.
              ''')
     streamid = st.text_input(label='streamid')
-    channel = st.text_input(label='Stream ID',value='@ScottJohnson')
+    channel = st.text_input(label='Stream ID',value='@macaddict89')
     if st.button(label='Auto-detect'):
         streamid = find_stream_id(channel)
         if streamid:

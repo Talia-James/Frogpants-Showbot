@@ -9,14 +9,14 @@ from funcs import *
 import requests,time,sys
 # from googleapiclient.errors import HttpError
 #Set creator page and read showbot token to prepare to submit. Default is parent directory.
-showbot_channel = 'Frogpants'
+showbot_channel = 'macaddict89'
 with open('../showbot_token.txt','r') as f:
     token = f.readlines()[0]
 
 
 #Use selenium to see if channel is live or not.
 # If the stream is live, it will return the streamid
-streamid = find_stream_id('@ScottJohnson')
+streamid = find_stream_id('@macaddict89')
 if streamid:
     print(f'Live stream detected.\nLive stream id: {streamid}')
 else:

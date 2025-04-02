@@ -14,7 +14,7 @@ import pandas as pd
 import traceback
 #Set creator page and read showbot token to prepare to submit. Default is parent directory.
 print('Script Init')
-showbot_channel = 'Frogpants'
+showbot_channel = 'macaddict89'
 livechatid = sys.argv[1]
 show = sys.argv[2]
 with open('../showbot_token.txt','r') as f:

@@ -40,7 +40,7 @@ def build_headless():
     return driver
 
 def build_submission_history(showbot_channel):
-    url = f'https://tms.showbot.tv/s/checkTitlesBlob.php?channel={showbot_channel}'
+    url = f'https://macaddict89.showbot.tv/s/checkTitlesBlob.php?channel={showbot_channel}'
     hist_json = requests.get(url).json()
     authors,titles,times = [],[],[]
     for entry in hist_json['titles'][:-1]:
