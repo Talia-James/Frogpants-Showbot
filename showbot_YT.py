@@ -66,6 +66,7 @@ try:
                 print(f'{author}: {title}') #Add new title to list and add author to another list to maintain the order. Print for debugging and monitoring purposes.
                 author_html,title_html = html_ify(author),html_ify(title) #Prepare link for submission then submit via Requests module
                 submission_link = f'http://www.showbot.tv/s/add.php?title={title_html}&user={author_html}&channel={showbot_channel}&key={token}'
+                print(submission_link)
                 try:
                     requests.get(submission_link)
                 except TimeoutError:

@@ -39,7 +39,7 @@ if os.path.exists(f'archive/{df_name}'):
         'time':new_showbot_times
                     }
     df_to_merge = pd.DataFrame.from_dict(new_df_dict)
-    df = pd.merge(df,df_to_merge,how='outer')
+    df = pd.concat(df,df_to_merge,how='outer')
     author_index,submitted_titles = df.author.values.tolist(),df.title.values.tolist()
     df.sort_values('time',ascending=True,inplace=True)  
     df.to_csv(f'archive/{df_name}',encoding='utf-8',index=False)
@@ -78,7 +78,7 @@ try:
         request = youtube.liveChatMessages().insert(part="snippet",body={"snippet": {"liveChatId": livechatid,
                 "type": "textMessageEvent",
                 "textMessageDetails": {
-                "messageText": "Showbot is up! Showbot is proudly a woke bot and was created by a Canadian trans woman."}}})
+                "messageText": "Showbot is up! Showbot is proudly a woke bot and was created by a Canadian trans woman. Elbows up!"}}})
             #TODO capture and parse the response code in case the request is denied.
         response = request.execute()
     print('Loop Init')

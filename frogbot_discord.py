@@ -136,7 +136,8 @@ async def wc(ctx):
     df_name = f'{show}-{datetime.today().year}-{datetime.today().month}-{datetime.today().day}.csv'
     cloud_name = f'{show}-{datetime.today().year}-{datetime.today().month}-{datetime.today().day}.png'
     df = pd.read_csv(f'archive/{df_name}',encoding='utf-8')
-    text = ' '.join(df.title.tolist())
+    title_list = [str(i) for i in df.title.tolist()]
+    text = ' '.join(title_list)
     cloud = wordcloud.WordCloud().generate(text)
     cloud.to_file(f'word_clouds/{cloud_name}')
     await ctx.send(f"Word cloud of today's show titles!")
